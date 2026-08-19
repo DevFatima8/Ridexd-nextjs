@@ -1,0 +1,220 @@
+"use client";
+
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { GROUPS } from "@/lib/catalog";
+import type { CategoryWithCount } from "@/lib/queries";
+
+export function CategoryManager({ categories }: { categories: CategoryWithCount[] }) {
+  const router = useRouter();
+  const [open, setOpen] = useState(false);
+  const [error, setError] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [draft, setDraft] = useState({ name: "", tagline: "", imageUrl: "", groupSlug: "women" });
+
+  function reset() {
+    setDraft({ name: "", tagline: "", imageUrl: "", groupSlug: "women" });
+    setEditingId(null);
+    setError("");
+  }
+
+  async function save() {
+    setBusy(true);
+    setError("");
+    try {
+      if (!draft.name.trim()) throw new Error("Category name is required");
+      const response = await fetch(
+        editingId ? `/api/categories/${editingId}` : "/api/categories",
+        {
+          method: editingId ? "PATCH" : "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(draft),
+        },
+      );
+      const data = await response.json();
+      if (!response.ok || !data.ok) throw new Error(data.error ?? "Save failed");
+      reset();
+      setOpen(false);
+      router.refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Save failed");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function remove(id: number, name: string) {
+    if (!window.confirm(`Delete category “${name}”? Products stay in place but lose this category.`)) {
+      return;
+    }
+    setBusy(true);
+    await fetch(`/api/categories/${id}`, { method: "DELETE" });
+    setBusy(false);
+    router.refresh();
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-[#e3e5e7] bg-white p-4">
+        <div>
+          <p className="text-[13px] font-semibold">
+            {categories.length} categories across {GROUPS.length} departments
+          </p>
+          <p className="text-[12px] text-[#8c9196]">
+            Jitni categories chahiye utni banaein — nayi category foran storefront menu, collections,
+            filters aur product form mein show ho jati hai.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={() => {
+            reset();
+            setOpen((v) => !v);
+          }}
+          className="rounded bg-[#303335] px-3.5 py-2 text-[13px] text-white hover:bg-black"
+        >
+          {open ? "Close" : "+ Add category"}
+        </button>
+      </div>
+
+      {open && (
+        <div className="grid gap-3 rounded-lg border border-[#e3e5e7] bg-white p-5 sm:grid-cols-2">
+          <label className="block text-[12px] text-[#6d7175]">
+            Department
+            <select
+              value={draft.groupSlug}
+              onChange={(e) => setDraft((d) => ({ ...d, groupSlug: e.target.value }))}
+              className="mt-1.5 w-full rounded border border-[#c9cccf] px-3 py-2 text-[13px]"
+            >
+              {GROUPS.map((g) => (
+                <option key={g.slug} value={g.slug}>
+                  {g.name}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="block text-[12px] text-[#6d7175]">
+            Category name
+            <input
+              value={draft.name}
+              onChange={(e) => setDraft((d) => ({ ...d, name: e.target.value }))}
+              placeholder="e.g. Winter Shawl Kameez"
+              className="mt-1.5 w-full rounded border border-[#c9cccf] px-3 py-2 text-[13px] outline-none focus:border-[#00a0ac]"
+            />
+          </label>
+          <label className="block text-[12px] text-[#6d7175]">
+            Tagline
+            <input
+              value={draft.tagline}
+              onChange={(e) => setDraft((d) => ({ ...d, tagline: e.target.value }))}
+              placeholder="e.g. Warm wool 3 piece"
+              className="mt-1.5 w-full rounded border border-[#c9cccf] px-3 py-2 text-[13px] outline-none focus:border-[#00a0ac]"
+            />
+          </label>
+          <label className="block text-[12px] text-[#6d7175]">
+            Image URL
+            <input
+              value={draft.imageUrl}
+              onChange={(e) => setDraft((d) => ({ ...d, imageUrl: e.target.value }))}
+              placeholder="https://…"
+              className="mt-1.5 w-full rounded border border-[#c9cccf] px-3 py-2 text-[13px] outline-none focus:border-[#00a0ac]"
+            />
+          </label>
+          {error && <p className="text-[12px] text-[#d72c0d] sm:col-span-2">{error}</p>}
+          <div className="flex gap-2 sm:col-span-2">
+            <button
+              type="button"
+              onClick={save}
+              disabled={busy}
+              className="rounded bg-[#00a0ac] px-4 py-2 text-[13px] font-medium text-white hover:bg-[#00838d] disabled:opacity-60"
+            >
+              {busy ? "Saving…" : editingId ? "Save changes" : "Create category"}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                reset();
+                setOpen(false);
+              }}
+              className="rounded border border-[#c9cccf] px-4 py-2 text-[13px] hover:bg-[#f4f5f7]"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
+      <div className="overflow-x-auto rounded-lg border border-[#e3e5e7] bg-white">
+        <table className="w-full min-w-[720px] text-left text-[13px]">
+          <thead className="bg-[#fafbfb] text-[11px] uppercase text-[#6d7175]">
+            <tr>
+              <th className="px-4 py-3">Category</th>
+              <th className="px-3 py-3">Department</th>
+              <th className="px-3 py-3">Slug</th>
+              <th className="px-3 py-3">Products</th>
+              <th className="px-4 py-3 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {categories.map((cat) => (
+              <tr key={cat.id} className="border-t border-[#f1f2f3] hover:bg-[#fafbfb]">
+                <td className="px-4 py-3">
+                  <div className="flex items-center gap-3">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={cat.image}
+                      alt={cat.name}
+                      className="h-10 w-8 rounded object-cover"
+                    />
+                    <div>
+                      <p className="font-medium">{cat.name}</p>
+                      <p className="text-[11px] text-[#8c9196]">{cat.tagline}</p>
+                    </div>
+                  </div>
+                </td>
+                <td className="px-3 py-3 capitalize">{cat.groupSlug}</td>
+                <td className="px-3 py-3 text-[#6d7175]">{cat.categorySlug}</td>
+                <td className="px-3 py-3">{cat.productCount}</td>
+                <td className="px-4 py-3 text-right">
+                  <div className="flex items-center justify-end gap-3 text-[12px]">
+                    <Link
+                      href={`/admin/products?group=${cat.groupSlug}&category=${cat.categorySlug}`}
+                      className="text-[#6d7175] hover:text-[#202223]"
+                    >
+                      Products
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEditingId(cat.id);
+                        setDraft({
+                          name: cat.name,
+                          tagline: cat.tagline,
+                          imageUrl: cat.image,
+                          groupSlug: cat.groupSlug,
+                        });
+                        setOpen(true);
+                      }}
+                      className="rounded border border-[#c9cccf] bg-white px-2.5 py-1 text-[#00a0ac] hover:bg-[#e6f7f8]"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => remove(cat.id, cat.name)}
+                      className="text-[#d72c0d]"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
