@@ -310,5 +310,5 @@ export function shippingFor(subtotal: number): number {
   return subtotal >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_FLAT;
 }
 
-export const MAX_PRODUCT_IMAGES = 10;
+export const MAX_PRODUCT_IMAGES = 20;
 export const WHATSAPP_NUMBER = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? "923000000000";
