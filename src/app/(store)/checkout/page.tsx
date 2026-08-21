@@ -158,8 +158,14 @@ export default function CheckoutPage() {
             <div className="mt-5 space-y-4">
               {lines.map((line) => (
                 <div key={`${line.productId}-${line.variant}`} className="flex gap-3">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={line.image} alt={line.title} className="h-20 w-16 rounded object-cover" />
+                  {line.image ? (
+                    /* eslint-disable-next-line @next/next/no-img-element */
+                    <img src={line.image} alt={line.title} className="h-20 w-16 rounded object-cover" />
+                  ) : (
+                    <div className="flex h-20 w-16 items-center justify-center rounded bg-sand text-xs text-ink-soft/40">
+                      No img
+                    </div>
+                  )}
                   <div className="flex-1 text-sm">
                     <p className="font-medium">{line.title}</p>
                     <p className="text-xs text-ink-soft/70">

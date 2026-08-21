@@ -206,12 +206,18 @@ export default async function HomePage() {
                       href={`/shop?group=${group.slug}&category=${cat.categorySlug}`}
                       className="group flex gap-4 rounded-xl border border-transparent p-3 transition hover:border-sand hover:bg-cream"
                     >
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={cat.image}
-                        alt={cat.name}
-                        className="h-20 w-16 rounded object-cover"
-                      />
+                      {cat.image ? (
+                        /* eslint-disable-next-line @next/next/no-img-element */
+                        <img
+                          src={cat.image}
+                          alt={cat.name}
+                          className="h-20 w-16 rounded object-cover"
+                        />
+                      ) : (
+                        <div className="flex h-20 w-16 items-center justify-center rounded bg-sand text-xs text-ink-soft/40">
+                          No img
+                        </div>
+                      )}
                       <div>
                         <p className="text-[15px] font-medium group-hover:text-plum">{cat.name}</p>
                         <p className="text-xs text-ink-soft/70">{cat.tagline}</p>

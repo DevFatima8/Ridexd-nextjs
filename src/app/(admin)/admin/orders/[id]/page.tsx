@@ -44,8 +44,14 @@ export default async function AdminOrderDetail({ params }: { params: Params }) {
           <div className="divide-y divide-[#f1f2f3]">
             {items.map((item) => (
               <div key={item.id} className="flex items-center gap-4 px-5 py-4">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={item.imageUrl} alt={item.title} className="h-16 w-12 rounded object-cover" />
+                {item.imageUrl ? (
+                  /* eslint-disable-next-line @next/next/no-img-element */
+                  <img src={item.imageUrl} alt={item.title} className="h-16 w-12 rounded object-cover" />
+                ) : (
+                  <div className="flex h-16 w-12 items-center justify-center rounded bg-[#f1f2f3] text-[9px] font-semibold text-[#8c9196]">
+                    NO IMG
+                  </div>
+                )}
                 <div className="flex-1">
                   <p className="text-[13px] font-medium">{item.title}</p>
                   <p className="text-[11px] text-[#8c9196]">

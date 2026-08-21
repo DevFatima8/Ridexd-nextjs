@@ -17,14 +17,20 @@ export function ProductCard({ product }: { product: ProductRow }) {
     <div className="group relative flex flex-col">
       <Link href={`/product/${product.slug}`} className="relative block overflow-hidden rounded-lg bg-cream">
         <div className="aspect-[3/4] w-full overflow-hidden">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={images[0] ?? ""}
-            alt={product.title}
-            loading="lazy"
-            className="h-full w-full object-cover transition duration-700 group-hover:scale-[1.04]"
-          />
-          {images[1] && (
+          {images[0] ? (
+            /* eslint-disable-next-line @next/next/no-img-element */
+            <img
+              src={images[0]}
+              alt={product.title}
+              loading="lazy"
+              className="h-full w-full object-cover transition duration-700 group-hover:scale-[1.04]"
+            />
+          ) : (
+            <div className="flex h-full w-full items-center justify-center bg-cream text-xs text-ink-soft/40">
+              No image
+            </div>
+          )}
+          {images[1] ? (
             /* eslint-disable-next-line @next/next/no-img-element */
             <img
               src={images[1]}
@@ -32,7 +38,7 @@ export function ProductCard({ product }: { product: ProductRow }) {
               loading="lazy"
               className="absolute inset-0 h-full w-full object-cover opacity-0 transition duration-500 group-hover:opacity-100"
             />
-          )}
+          ) : null}
         </div>
 
         <div className="absolute left-3 top-3 flex flex-col gap-1">

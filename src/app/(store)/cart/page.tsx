@@ -33,8 +33,14 @@ export default function CartPage() {
           <div className="divide-y divide-sand border-y border-sand">
             {lines.map((line) => (
               <div key={`${line.productId}-${line.variant}`} className="flex gap-5 py-6">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={line.image} alt={line.title} className="h-36 w-28 rounded object-cover" />
+                {line.image ? (
+                  /* eslint-disable-next-line @next/next/no-img-element */
+                  <img src={line.image} alt={line.title} className="h-36 w-28 rounded object-cover" />
+                ) : (
+                  <div className="flex h-36 w-28 items-center justify-center rounded bg-sand text-xs text-ink-soft/40">
+                    No img
+                  </div>
+                )}
                 <div className="flex-1">
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div>

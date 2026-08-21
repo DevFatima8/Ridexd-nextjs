@@ -1,7 +1,8 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRef, useState } from "react";
+import { useConfirm } from "@/components/confirm-provider";
 import type { ProductRow } from "@/db/schema";
 import { GROUPS, MAX_PRODUCT_IMAGES } from "@/lib/catalog";
 
@@ -22,6 +23,7 @@ export function ProductForm({
   categories: CategoryOption[];
 }) {
   const router = useRouter();
+  const confirm = useConfirm();
   const editing = Boolean(product);
 
   const [form, setForm] = useState({
@@ -48,6 +50,50 @@ export function ProductForm({
   const [customSize, setCustomSize] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [dragOver, setDragOver] = useState(false);
+
+  function handleFiles(files: File[]) {
+    const remaining = MAX_PRODUCT_IMAGES - images.length;
+    if (remaining <= 0) return;
+    const selected = files.slice(0, remaining);
+
+    selected.forEach((file) => {
+      if (!file.type.startsWith("image/")) return;
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const result = e.target?.result;
+        if (typeof result === "string") {
+          setImages((prev) => (prev.length < MAX_PRODUCT_IMAGES ? [...prev, result] : prev));
+        }
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(e.target.files ?? []);
+    if (files.length) handleFiles(files);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  }
+
+  function handleDragOver(e: React.DragEvent) {
+    e.preventDefault();
+    setDragOver(true);
+  }
+
+  function handleDragLeave(e: React.DragEvent) {
+    e.preventDefault();
+    setDragOver(false);
+  }
+
+  function handleDrop(e: React.DragEvent) {
+    e.preventDefault();
+    setDragOver(false);
+    const files = Array.from(e.dataTransfer.files ?? []);
+    if (files.length) handleFiles(files);
+  }
 
   const groupCategories = categories.filter((c) => c.groupSlug === form.groupSlug);
   const fallbackCategory =
@@ -104,7 +150,13 @@ export function ProductForm({
 
   async function remove() {
     if (!product) return;
-    if (!window.confirm(`Delete “${product.title}”?`)) return;
+    const ok = await confirm({
+      title: "Delete product",
+      message: `Are you sure you want to delete “${product.title}”? This action cannot be undone.`,
+      confirmText: "Delete",
+      variant: "danger",
+    });
+    if (!ok) return;
     setSaving(true);
     await fetch(`/api/products/${product.id}`, { method: "DELETE" });
     router.push("/admin/products");
@@ -145,17 +197,34 @@ export function ProductForm({
             </p>
           </div>
           <p className="mt-1 text-[12px] text-[#8c9196]">
-            Add or remove image URLs (first image is the main shot). Maximum {MAX_PRODUCT_IMAGES} images per product.
+            Upload image files from your computer or paste image URLs below (first image is main shot). Maximum {MAX_PRODUCT_IMAGES} images per product.
           </p>
+
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            multiple
+            onChange={handleFileUpload}
+            className="hidden"
+          />
+
+          {/* Image Previews */}
           <div className="mt-4 flex flex-wrap gap-3">
             {images.map((image, index) => (
-              <div key={`${image}-${index}`} className="relative">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={image} alt="" className="h-24 w-20 rounded object-cover" />
+              <div key={`${image.slice(0, 30)}-${index}`} className="relative">
+                {image ? (
+                  /* eslint-disable-next-line @next/next/no-img-element */
+                  <img src={image} alt="" className="h-24 w-20 rounded border border-[#e3e5e7] object-cover" />
+                ) : (
+                  <div className="flex h-24 w-20 items-center justify-center rounded bg-[#f1f2f3] text-[9px] font-semibold text-[#8c9196]">
+                    NO IMG
+                  </div>
+                )}
                 <button
                   type="button"
                   onClick={() => setImages((prev) => prev.filter((_, i) => i !== index))}
-                  className="absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full bg-[#d72c0d] text-[11px] text-white"
+                  className="absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full bg-[#d72c0d] text-[11px] text-white shadow"
                   aria-label={`Remove image ${index + 1}`}
                 >
                   ×
@@ -171,25 +240,33 @@ export function ProductForm({
               </div>
             ))}
             {images.length < MAX_PRODUCT_IMAGES && (
-              <div className="flex h-24 w-20 items-center justify-center rounded border border-dashed border-[#c9cccf] text-[#8c9196]">
-                +
-              </div>
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="flex h-24 w-20 flex-col items-center justify-center rounded border border-dashed border-[#c9cccf] text-[#8c9196] transition hover:border-[#00a0ac] hover:bg-[#e6f7f8]/50 hover:text-[#00a0ac]"
+                title="Choose file from computer"
+              >
+                <span className="text-xl font-light">+</span>
+                <span className="text-[10px] font-medium">Upload</span>
+              </button>
             )}
           </div>
+
+          {/* Control bar for URL input */}
           <div className="mt-4 flex gap-2">
             <input
               value={imageInput}
               onChange={(e) => setImageInput(e.target.value)}
-              placeholder="https://example.com/image.jpg"
+              placeholder="Or paste image URL (https://...)"
               className="flex-1 rounded border border-[#c9cccf] px-3 py-2 text-[13px] outline-none focus:border-[#00a0ac]"
             />
             <button
               type="button"
               onClick={addImage}
               disabled={images.length >= MAX_PRODUCT_IMAGES}
-              className="rounded border border-[#c9cccf] px-4 py-2 text-[13px] hover:bg-[#f4f5f7] disabled:cursor-not-allowed disabled:opacity-50"
+              className="rounded border border-[#c9cccf] bg-white px-4 py-2 text-[13px] font-medium hover:bg-[#f4f5f7] disabled:cursor-not-allowed disabled:opacity-50"
             >
-              Add image
+              Add URL
             </button>
           </div>
           {images.length > 0 && (

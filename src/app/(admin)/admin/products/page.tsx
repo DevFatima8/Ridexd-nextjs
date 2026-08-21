@@ -150,12 +150,18 @@ export default async function AdminProductsPage({ searchParams }: { searchParams
               <tr key={product.id} className="border-t border-[#f1f2f3] align-middle hover:bg-[#fafbfb]">
                 <td className="px-4 py-3">
                   <div className="flex items-center gap-3">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={product.images?.[0] ?? ""}
-                      alt={product.title}
-                      className="h-11 w-9 rounded object-cover"
-                    />
+                    {product.images?.[0] ? (
+                      /* eslint-disable-next-line @next/next/no-img-element */
+                      <img
+                        src={product.images[0]}
+                        alt={product.title}
+                        className="h-11 w-9 rounded object-cover"
+                      />
+                    ) : (
+                      <div className="flex h-11 w-9 items-center justify-center rounded bg-[#f1f2f3] text-[9px] font-semibold text-[#8c9196]">
+                        NO IMG
+                      </div>
+                    )}
                     <div>
                       <Link href={`/admin/products/${product.id}`} className="font-medium text-[#00a0ac]">
                         {product.title}

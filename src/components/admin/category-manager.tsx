@@ -2,17 +2,33 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRef, useState } from "react";
+import { useConfirm } from "@/components/confirm-provider";
 import { GROUPS } from "@/lib/catalog";
 import type { CategoryWithCount } from "@/lib/queries";
 
 export function CategoryManager({ categories }: { categories: CategoryWithCount[] }) {
   const router = useRouter();
+  const confirm = useConfirm();
   const [open, setOpen] = useState(false);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [draft, setDraft] = useState({ name: "", tagline: "", imageUrl: "", groupSlug: "women" });
+  const catFileInputRef = useRef<HTMLInputElement>(null);
+
+  function handleCatFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file || !file.type.startsWith("image/")) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const result = event.target?.result;
+      if (typeof result === "string") {
+        setDraft((d) => ({ ...d, imageUrl: result }));
+      }
+    };
+    reader.readAsDataURL(file);
+  }
 
   function reset() {
     setDraft({ name: "", tagline: "", imageUrl: "", groupSlug: "women" });
@@ -46,9 +62,14 @@ export function CategoryManager({ categories }: { categories: CategoryWithCount[
   }
 
   async function remove(id: number, name: string) {
-    if (!window.confirm(`Delete category “${name}”? Products stay in place but lose this category.`)) {
-      return;
-    }
+    const ok = await confirm({
+      title: "Delete category",
+      message: `Delete category “${name}”? Products stay in place but lose this category assignment.`,
+      confirmText: "Delete",
+      variant: "danger",
+    });
+    if (!ok) return;
+
     setBusy(true);
     await fetch(`/api/categories/${id}`, { method: "DELETE" });
     setBusy(false);
@@ -113,15 +134,31 @@ export function CategoryManager({ categories }: { categories: CategoryWithCount[
               className="mt-1.5 w-full rounded border border-[#c9cccf] px-3 py-2 text-[13px] outline-none focus:border-[#00a0ac]"
             />
           </label>
-          <label className="block text-[12px] text-[#6d7175]">
-            Image URL
+          <div className="block text-[12px] text-[#6d7175]">
+            Image (Upload or URL)
             <input
-              value={draft.imageUrl}
-              onChange={(e) => setDraft((d) => ({ ...d, imageUrl: e.target.value }))}
-              placeholder="https://…"
-              className="mt-1.5 w-full rounded border border-[#c9cccf] px-3 py-2 text-[13px] outline-none focus:border-[#00a0ac]"
+              ref={catFileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleCatFileUpload}
+              className="hidden"
             />
-          </label>
+            <div className="mt-1.5 flex gap-2">
+              <input
+                value={draft.imageUrl}
+                onChange={(e) => setDraft((d) => ({ ...d, imageUrl: e.target.value }))}
+                placeholder="https://... or choose file from computer"
+                className="flex-1 rounded border border-[#c9cccf] px-3 py-2 text-[13px] outline-none focus:border-[#00a0ac]"
+              />
+              <button
+                type="button"
+                onClick={() => catFileInputRef.current?.click()}
+                className="rounded border border-[#c9cccf] bg-[#f4f5f7] px-3 py-2 text-[12px] font-medium text-[#202223] hover:bg-[#e3e5e7]"
+              >
+                📁 Choose File
+              </button>
+            </div>
+          </div>
           {error && <p className="text-[12px] text-[#d72c0d] sm:col-span-2">{error}</p>}
           <div className="flex gap-2 sm:col-span-2">
             <button
@@ -162,12 +199,18 @@ export function CategoryManager({ categories }: { categories: CategoryWithCount[
               <tr key={cat.id} className="border-t border-[#f1f2f3] hover:bg-[#fafbfb]">
                 <td className="px-4 py-3">
                   <div className="flex items-center gap-3">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={cat.image}
-                      alt={cat.name}
-                      className="h-10 w-8 rounded object-cover"
-                    />
+                    {cat.image ? (
+                      /* eslint-disable-next-line @next/next/no-img-element */
+                      <img
+                        src={cat.image}
+                        alt={cat.name}
+                        className="h-10 w-8 rounded object-cover"
+                      />
+                    ) : (
+                      <div className="flex h-10 w-8 items-center justify-center rounded bg-[#f1f2f3] text-[9px] font-semibold text-[#8c9196]">
+                        NO IMG
+                      </div>
+                    )}
                     <div>
                       <p className="font-medium">{cat.name}</p>
                       <p className="text-[11px] text-[#8c9196]">{cat.tagline}</p>

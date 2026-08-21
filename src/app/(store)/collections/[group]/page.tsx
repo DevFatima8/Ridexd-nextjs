@@ -58,12 +58,18 @@ export default async function GroupPage({ params }: { params: Params }) {
               className="group overflow-hidden rounded-xl border border-sand"
             >
               <div className="aspect-[4/5] overflow-hidden bg-cream">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={cat.image}
-                  alt={cat.name}
-                  className="h-full w-full object-cover transition duration-700 group-hover:scale-105"
-                />
+                {cat.image ? (
+                  /* eslint-disable-next-line @next/next/no-img-element */
+                  <img
+                    src={cat.image}
+                    alt={cat.name}
+                    className="h-full w-full object-cover transition duration-700 group-hover:scale-105"
+                  />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center bg-cream text-xs text-ink-soft/40">
+                    No image
+                  </div>
+                )}
               </div>
               <div className="p-4">
                 <p className="text-[15px] font-medium group-hover:text-plum">{cat.name}</p>

@@ -225,7 +225,15 @@ export async function getCategoryOverview(group?: string): Promise<CategoryWithC
       products,
       and(eq(products.groupSlug, categories.groupSlug), eq(products.categorySlug, categories.slug)),
     )
-    .groupBy(categories.id)
+    .groupBy(
+      categories.id,
+      categories.groupSlug,
+      categories.slug,
+      categories.name,
+      categories.tagline,
+      categories.imageUrl,
+      categories.sortOrder,
+    )
     .orderBy(asc(categories.sortOrder), asc(categories.id));
 
   return rows

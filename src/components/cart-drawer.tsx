@@ -54,8 +54,14 @@ export function CartDrawer() {
                   key={`${line.productId}-${line.variant}`}
                   className="flex gap-4 border-b border-sand pb-4"
                 >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={line.image} alt={line.title} className="h-28 w-20 rounded object-cover" />
+                  {line.image ? (
+                    /* eslint-disable-next-line @next/next/no-img-element */
+                    <img src={line.image} alt={line.title} className="h-28 w-20 rounded object-cover" />
+                  ) : (
+                    <div className="flex h-28 w-20 items-center justify-center rounded bg-sand text-xs text-ink-soft/40">
+                      No img
+                    </div>
+                  )}
                   <div className="flex-1">
                     <div className="flex items-start justify-between gap-2">
                       <Link href={`/product/${line.slug}`} onClick={closeDrawer} className="text-sm font-medium">

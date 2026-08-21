@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { useConfirm } from "@/components/confirm-provider";
 
 export function OrderDeleteButton({
   id,
@@ -18,16 +19,18 @@ export function OrderDeleteButton({
   variant?: "text" | "button";
 }) {
   const router = useRouter();
+  const confirm = useConfirm();
   const [busy, setBusy] = useState(false);
 
   async function remove() {
-    if (
-      !window.confirm(
-        `Delete order ${orderNumber}?\n\nThis removes the order and its line items from order history permanently.`,
-      )
-    ) {
-      return;
-    }
+    const ok = await confirm({
+      title: "Delete order",
+      message: `Delete order ${orderNumber}? This removes the order and its line items from order history permanently.`,
+      confirmText: "Delete",
+      variant: "danger",
+    });
+    if (!ok) return;
+
     setBusy(true);
     await fetch(`/api/orders/${id}`, { method: "DELETE" });
     window.dispatchEvent(new Event("ridexd:orders-updated"));

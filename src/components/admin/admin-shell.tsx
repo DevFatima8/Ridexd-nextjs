@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useState, type ReactNode } from "react";
 import { AdminNotifications } from "./admin-notifications";
 import { GROUPS } from "@/lib/catalog";
+import { useConfirm } from "@/components/confirm-provider";
 
 const NAV = [
   { href: "/admin", label: "Home", icon: "▤" },
@@ -17,6 +18,7 @@ const NAV = [
 export function AdminShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
+  const confirm = useConfirm();
   const [open, setOpen] = useState(false);
 
   if (pathname === "/admin/login") {
@@ -24,65 +26,76 @@ export function AdminShell({ children }: { children: ReactNode }) {
   }
 
   async function logout() {
+    const ok = await confirm({
+      title: "Log out",
+      message: "Are you sure you want to log out of the admin panel?",
+      confirmText: "Log out",
+      cancelText: "Cancel",
+      variant: "danger",
+    });
+    if (!ok) return;
+
     await fetch("/api/admin/session", { method: "DELETE" });
     router.push("/admin/login");
   }
 
   return (
     <div className="min-h-screen bg-[#f4f5f7] text-[#202223]">
-      <div className="flex">
+      <div className="flex min-h-screen">
         <aside
-          className={`fixed z-40 h-screen w-60 shrink-0 bg-[#1a1c1d] px-3 py-5 text-[#e3e5e7] transition-transform lg:static lg:translate-x-0 ${
+          className={`fixed top-0 left-0 z-40 flex h-screen w-60 shrink-0 flex-col justify-between overflow-y-auto hide-scrollbar bg-[#1a1c1d] px-3 py-5 text-[#e3e5e7] transition-transform lg:sticky lg:translate-x-0 ${
             open ? "translate-x-0" : "-translate-x-full"
           }`}
         >
-          <div className="flex items-center gap-2 px-2">
-            <span className="flex h-8 w-8 items-center justify-center rounded bg-[#00a0ac] text-sm font-bold text-white">
-              R
-            </span>
-            <div className="leading-tight">
-              <p className="text-sm font-semibold">Ridexd Admin</p>
-              <p className="text-[10px] text-[#9aa0a6]">ridexd.com</p>
+          <div>
+            <div className="flex items-center gap-2 px-2">
+              <span className="flex h-8 w-8 items-center justify-center rounded bg-[#00a0ac] text-sm font-bold text-white">
+                R
+              </span>
+              <div className="leading-tight">
+                <p className="text-sm font-semibold">Ridexd Admin</p>
+                <p className="text-[10px] text-[#9aa0a6]">ridexd.com</p>
+              </div>
+            </div>
+
+            <nav className="mt-6 space-y-0.5">
+              {NAV.map((item) => {
+                const active =
+                  item.href === "/admin" ? pathname === "/admin" : pathname.startsWith(item.href);
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={() => setOpen(false)}
+                    className={`flex items-center gap-3 rounded px-2.5 py-2 text-[13px] transition ${
+                      active ? "bg-[#303335] text-white" : "hover:bg-[#26292b]"
+                    }`}
+                  >
+                    <span className="w-4 text-center opacity-80">{item.icon}</span>
+                    {item.label}
+                  </Link>
+                );
+              })}
+            </nav>
+
+            <div className="mt-6 border-t border-white/10 pt-4">
+              <p className="px-2 text-[10px] tracking-[0.2em] text-[#9aa0a6] uppercase">Departments</p>
+              <div className="mt-2 space-y-0.5">
+                {GROUPS.map((group) => (
+                  <Link
+                    key={group.slug}
+                    href={`/admin/products?group=${group.slug}`}
+                    onClick={() => setOpen(false)}
+                    className="block rounded px-2.5 py-1.5 text-[13px] hover:bg-[#26292b]"
+                  >
+                    {group.name}
+                  </Link>
+                ))}
+              </div>
             </div>
           </div>
 
-          <nav className="mt-6 space-y-0.5">
-            {NAV.map((item) => {
-              const active =
-                item.href === "/admin" ? pathname === "/admin" : pathname.startsWith(item.href);
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  onClick={() => setOpen(false)}
-                  className={`flex items-center gap-3 rounded px-2.5 py-2 text-[13px] transition ${
-                    active ? "bg-[#303335] text-white" : "hover:bg-[#26292b]"
-                  }`}
-                >
-                  <span className="w-4 text-center opacity-80">{item.icon}</span>
-                  {item.label}
-                </Link>
-              );
-            })}
-          </nav>
-
-          <div className="mt-6 border-t border-white/10 pt-4">
-            <p className="px-2 text-[10px] tracking-[0.2em] text-[#9aa0a6] uppercase">Departments</p>
-            <div className="mt-2 space-y-0.5">
-              {GROUPS.map((group) => (
-                <Link
-                  key={group.slug}
-                  href={`/admin/products?group=${group.slug}`}
-                  onClick={() => setOpen(false)}
-                  className="block rounded px-2.5 py-1.5 text-[13px] hover:bg-[#26292b]"
-                >
-                  {group.name}
-                </Link>
-              ))}
-            </div>
-          </div>
-
-          <div className="absolute bottom-5 w-52 space-y-1">
+          <div className="mt-6 space-y-1 border-t border-white/10 pt-3">
             <Link
               href="/"
               className="block rounded px-2.5 py-2 text-[13px] hover:bg-[#26292b]"
@@ -93,12 +106,19 @@ export function AdminShell({ children }: { children: ReactNode }) {
             <button
               type="button"
               onClick={logout}
-              className="w-full rounded px-2.5 py-2 text-left text-[13px] hover:bg-[#26292b]"
+              className="w-full rounded px-2.5 py-2 text-left text-[13px] text-red-400 hover:bg-[#26292b] hover:text-red-300 transition"
             >
               ⎋ Log out
             </button>
           </div>
         </aside>
+
+        {open && (
+          <div
+            className="fixed inset-0 z-30 bg-black/50 lg:hidden"
+            onClick={() => setOpen(false)}
+          />
+        )}
 
         <div className="min-w-0 flex-1">
           <header className="sticky top-0 z-30 flex items-center justify-between gap-4 border-b border-[#e3e5e7] bg-white px-4 py-3 lg:px-6">

@@ -3,13 +3,22 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { useConfirm } from "@/components/confirm-provider";
 
 export function ProductRowActions({ id, title }: { id: number; title: string }) {
   const router = useRouter();
+  const confirm = useConfirm();
   const [busy, setBusy] = useState(false);
 
   async function remove() {
-    if (!window.confirm(`Delete “${title}”? This cannot be undone.`)) return;
+    const ok = await confirm({
+      title: "Delete product",
+      message: `Are you sure you want to delete “${title}”? This action cannot be undone.`,
+      confirmText: "Delete",
+      variant: "danger",
+    });
+    if (!ok) return;
+
     setBusy(true);
     await fetch(`/api/products/${id}`, { method: "DELETE" });
     setBusy(false);
