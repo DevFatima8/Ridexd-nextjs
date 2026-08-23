@@ -129,8 +129,28 @@ export const orderItems = mysqlTable(
   (table) => [index("idx_items_order").on(table.orderId)],
 );
 
+export const contactMessages = mysqlTable(
+  "contact_messages",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    name: varchar("name", { length: 140 }).notNull(),
+    email: varchar("email", { length: 160 }).notNull(),
+    phone: varchar("phone", { length: 40 }).notNull(),
+    message: text("message").notNull(),
+    isRead: boolean("is_read").notNull().default(false),
+    createdAt: datetime("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+  },
+  (table) => [
+    index("idx_contact_messages_read").on(table.isRead),
+    index("idx_contact_messages_created").on(table.createdAt),
+  ],
+);
+
 export type CategoryRow = typeof categories.$inferSelect;
 export type ProductRow = typeof products.$inferSelect;
 export type NewProductRow = typeof products.$inferInsert;
 export type OrderRow = typeof orders.$inferSelect;
 export type OrderItemRow = typeof orderItems.$inferSelect;
+export type ContactMessageRow = typeof contactMessages.$inferSelect;
+export type NewContactMessageRow = typeof contactMessages.$inferInsert;
+

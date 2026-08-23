@@ -89,8 +89,21 @@ export const orderItems = pgTable("order_items", {
   lineTotal: integer("line_total").notNull().default(0),
 });
 
+export const contactMessages = pgTable("contact_messages", {
+  id: serial("id").primaryKey(),
+  name: varchar("name", { length: 140 }).notNull(),
+  email: varchar("email", { length: 160 }).notNull(),
+  phone: varchar("phone", { length: 40 }).notNull(),
+  message: text("message").notNull(),
+  isRead: boolean("is_read").notNull().default(false),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
 export type CategoryRow = typeof categories.$inferSelect;
 export type ProductRow = typeof products.$inferSelect;
 export type NewProductRow = typeof products.$inferInsert;
 export type OrderRow = typeof orders.$inferSelect;
 export type OrderItemRow = typeof orderItems.$inferSelect;
+export type ContactMessageRow = typeof contactMessages.$inferSelect;
+export type NewContactMessageRow = typeof contactMessages.$inferInsert;
+

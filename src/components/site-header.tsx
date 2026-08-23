@@ -47,6 +47,7 @@ export function SiteHeader({ categories = [] }: { categories?: CategoryWithCount
           <p className="hidden sm:block">Free delivery on orders above PKR 5,000</p>
           <p className="sm:hidden">Free delivery above PKR 5,000</p>
           <div className="flex items-center gap-4">
+            <Link href="/contact" className="hover:text-gold-soft">Contact</Link>
             <Link href="/track" className="hover:text-gold-soft">Track order</Link>
             <Link href="/admin" className="hover:text-gold-soft">Admin</Link>
           </div>
@@ -116,6 +117,7 @@ export function SiteHeader({ categories = [] }: { categories?: CategoryWithCount
             ))}
             <Link href="/shop" className="link-underline py-2">Shop</Link>
             <Link href="/about" className="link-underline py-2">About</Link>
+            <Link href="/contact" className="link-underline py-2">Contact</Link>
           </nav>
 
           <div className="flex items-center gap-3">
@@ -172,6 +174,7 @@ export function SiteHeader({ categories = [] }: { categories?: CategoryWithCount
               <div className="flex gap-4 border-t border-sand pt-4 text-[13px] tracking-[0.16em] uppercase">
                 <Link href="/shop">Shop all</Link>
                 <Link href="/about">About</Link>
+                <Link href="/contact">Contact</Link>
                 <Link href="/track">Track</Link>
               </div>
             </div>

@@ -93,6 +93,16 @@ async function run() {
           quantity INT NOT NULL DEFAULT 1,
           line_total INT NOT NULL DEFAULT 0
         );
+
+        CREATE TABLE IF NOT EXISTS contact_messages (
+          id SERIAL PRIMARY KEY,
+          name VARCHAR(140) NOT NULL,
+          email VARCHAR(160) NOT NULL,
+          phone VARCHAR(40) NOT NULL,
+          message TEXT NOT NULL,
+          is_read BOOLEAN NOT NULL DEFAULT false,
+          created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        );
       `;
       console.log("Executing PostgreSQL table creation query...");
       await client.query(sql);

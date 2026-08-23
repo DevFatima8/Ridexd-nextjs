@@ -1,6 +1,6 @@
 import { and, asc, count, desc, eq, gte, inArray, lte, or, sql } from "drizzle-orm";
 import { db } from "@/db";
-import { categories, orderItems, orders, products } from "@/db/schema";
+import { categories, contactMessages, orderItems, orders, products } from "@/db/schema";
 import type { NewProductRow, ProductRow } from "@/db/schema";
 import type { AnyColumn } from "drizzle-orm";
 import { CATEGORIES } from "./catalog";
@@ -306,7 +306,7 @@ export async function getGroupCounts(): Promise<Record<string, number>> {
       .from(products)
       .groupBy(products.groupSlug);
     const out: Record<string, number> = {};
-    rows.forEach((r) => (out[r.groupSlug] = Number(r.value)));
+    rows.forEach((r: { groupSlug: string; value: number | string }) => (out[r.groupSlug] = Number(r.value)));
     return out;
   } catch (error) {
     console.warn("[ridexd] getGroupCounts DB error, using fallback");
@@ -361,8 +361,8 @@ export async function getCategoryOverview(group?: string): Promise<CategoryWithC
       .orderBy(asc(categories.sortOrder), asc(categories.id));
 
     return rows
-      .filter((row) => !group || row.groupSlug === group)
-      .map((row) => ({
+      .filter((row: { groupSlug: string }) => !group || row.groupSlug === group)
+      .map((row: { id: number; groupSlug: string; categorySlug: string; name: string; tagline: string; image: string; productCount: number | string | null }) => ({
         id: row.id,
         groupSlug: row.groupSlug,
         categorySlug: row.categorySlug,
@@ -470,7 +470,7 @@ export async function createOrder(payload: CheckoutPayload) {
   if (!ids.length) throw new Error("Cart is empty");
 
   const found = await db.select().from(products).where(inArray(products.id, ids));
-  const byId = new Map(found.map((p) => [p.id, p]));
+  const byId = new Map(found.map((p: ProductRow) => [p.id, p]));
 
   const lines = payload.items
     .map((item) => {
@@ -674,7 +674,7 @@ export async function getAdminStats() {
         revenue: Number(orderAgg?.revenue ?? 0),
       },
       recentOrders,
-      topGroups: topGroups.map((g) => ({ group: g.groupSlug, value: Number(g.value) })),
+      topGroups: topGroups.map((g: { groupSlug: string; value: number | string }) => ({ group: g.groupSlug, value: Number(g.value) })),
     };
   } catch (error) {
     console.warn("[ridexd] getAdminStats DB error, returning fallback stats:", error);
@@ -703,3 +703,108 @@ export async function getAdminStats() {
     };
   }
 }
+
+/* --------------------------- contact messages ---------------------------- */
+
+export type ContactMessageInput = {
+  name: string;
+  email: string;
+  phone: string;
+  message: string;
+};
+
+export type ContactMessageFilters = {
+  status?: "all" | "unread" | "read";
+  search?: string;
+};
+
+export async function createContactMessage(input: ContactMessageInput) {
+  try {
+    await ensureSeeded();
+    await db.insert(contactMessages).values({
+      name: input.name.trim(),
+      email: input.email.trim(),
+      phone: input.phone.trim(),
+      message: input.message.trim(),
+      isRead: false,
+    });
+    return true;
+  } catch (error) {
+    console.error("[ridexd] createContactMessage DB error:", error);
+    throw error;
+  }
+}
+
+export async function listContactMessages(filters: ContactMessageFilters = {}) {
+  try {
+    await ensureSeeded();
+    const conditions = [];
+
+    if (filters.status === "unread") {
+      conditions.push(eq(contactMessages.isRead, false));
+    } else if (filters.status === "read") {
+      conditions.push(eq(contactMessages.isRead, true));
+    }
+
+    if (filters.search) {
+      const needle = `%${filters.search.trim()}%`;
+      const match = (column: AnyColumn) => sql`lower(${column}) like lower(${needle})`;
+      conditions.push(
+        or(
+          match(contactMessages.name),
+          match(contactMessages.email),
+          match(contactMessages.phone),
+          match(contactMessages.message),
+        )!,
+      );
+    }
+
+    const where = conditions.length ? and(...conditions) : undefined;
+
+    return await db
+      .select()
+      .from(contactMessages)
+      .where(where)
+      .orderBy(desc(contactMessages.id))
+      .limit(300);
+  } catch (error) {
+    console.warn("[ridexd] listContactMessages DB error:", error);
+    return [];
+  }
+}
+
+export async function getUnreadContactMessagesCount(): Promise<number> {
+  try {
+    await ensureSeeded();
+    const [{ value }] = await db
+      .select({ value: count() })
+      .from(contactMessages)
+      .where(eq(contactMessages.isRead, false));
+    return Number(value);
+  } catch (error) {
+    console.warn("[ridexd] getUnreadContactMessagesCount DB error:", error);
+    return 0;
+  }
+}
+
+export async function updateContactMessageReadStatus(id: number, isRead: boolean) {
+  try {
+    await db.update(contactMessages).set({ isRead }).where(eq(contactMessages.id, id));
+    const rows = await db.select().from(contactMessages).where(eq(contactMessages.id, id)).limit(1);
+    return rows[0] ?? null;
+  } catch (error) {
+    console.warn("[ridexd] updateContactMessageReadStatus DB error:", error);
+    return null;
+  }
+}
+
+export async function deleteContactMessage(id: number) {
+  try {
+    await db.delete(contactMessages).where(eq(contactMessages.id, id));
+    return true;
+  } catch (error) {
+    console.warn("[ridexd] deleteContactMessage DB error:", error);
+    return false;
+  }
+}
+
