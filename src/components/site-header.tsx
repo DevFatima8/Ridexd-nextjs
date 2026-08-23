@@ -71,9 +71,16 @@ export function SiteHeader({ categories = [] }: { categories?: CategoryWithCount
             <span className="mt-1.5 block h-0.5 w-4 bg-ink" />
           </button>
 
-          <Link href="/" className="flex items-baseline gap-2">
-            <span className="font-display text-2xl font-semibold tracking-[0.22em] text-ink">RIDEXD</span>
-            <span className="hidden text-[10px] tracking-[0.3em] text-gold sm:block">.COM</span>
+          <Link href="/" className="flex items-center gap-2 py-1">
+            <img
+              src="/logo.png"
+              alt="Ridexd.com"
+              className="h-10 md:h-12 w-auto object-contain transition-transform hover:scale-105"
+              style={{
+                filter:
+                  "drop-shadow(1px 0 0 #000) drop-shadow(-1px 0 0 #000) drop-shadow(0 1px 0 #000) drop-shadow(0 -1px 0 #000) drop-shadow(0 0 2px rgba(0,0,0,0.5))",
+              }}
+            />
           </Link>
 
           <nav className="hidden items-center gap-7 text-[13px] font-medium tracking-[0.12em] uppercase lg:flex">

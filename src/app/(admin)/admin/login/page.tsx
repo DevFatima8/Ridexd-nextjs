@@ -30,10 +30,12 @@ export default function AdminLoginPage() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-[#f4f5f7] px-4">
       <div className="w-full max-w-sm rounded-xl bg-white p-8 shadow-sm">
-        <div className="flex items-center gap-2">
-          <span className="flex h-9 w-9 items-center justify-center rounded bg-[#00a0ac] text-sm font-bold text-white">
-            R
-          </span>
+        <div className="flex items-center gap-3">
+          <img
+            src="/logo.png"
+            alt="Ridexd Admin"
+            className="h-10 w-auto object-contain"
+          />
           <div>
             <p className="font-semibold">Ridexd Admin</p>
             <p className="text-[11px] text-[#6d7175]">ridexd.com · staff login</p>
