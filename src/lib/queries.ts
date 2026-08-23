@@ -1,7 +1,7 @@
 import { and, asc, count, desc, eq, gte, inArray, lte, or, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { categories, contactMessages, orderItems, orders, products } from "@/db/schema";
-import type { NewProductRow, ProductRow } from "@/db/schema";
+import type { ContactMessageRow, NewProductRow, OrderItemRow, OrderRow, ProductRow } from "@/db/schema";
 import type { AnyColumn } from "drizzle-orm";
 import { CATEGORIES } from "./catalog";
 import { SEED_PRODUCTS } from "./seed-data";
@@ -172,7 +172,13 @@ function orderClause(sort?: string) {
   }
 }
 
-export async function listProducts(filters: ProductFilters = {}) {
+export async function listProducts(filters: ProductFilters = {}): Promise<{
+  items: ProductRow[];
+  total: number;
+  page: number;
+  pageSize: number;
+  pageCount: number;
+}> {
   try {
     await ensureSeeded();
     const page = Math.max(1, filters.page ?? 1);
@@ -256,7 +262,7 @@ export async function getProductById(id: number): Promise<ProductRow | null> {
   }
 }
 
-export async function getRelatedProducts(product: ProductRow, limit = 4) {
+export async function getRelatedProducts(product: ProductRow, limit = 4): Promise<ProductRow[]> {
   try {
     return await db
       .select()
@@ -464,13 +470,13 @@ export type CheckoutPayload = {
   items: CheckoutItem[];
 };
 
-export async function createOrder(payload: CheckoutPayload) {
+export async function createOrder(payload: CheckoutPayload): Promise<OrderRow> {
   await ensureSeeded();
   const ids = payload.items.map((i) => i.productId).filter((n) => Number.isFinite(n));
   if (!ids.length) throw new Error("Cart is empty");
 
   const found = await db.select().from(products).where(inArray(products.id, ids));
-  const byId = new Map(found.map((p: ProductRow) => [p.id, p]));
+  const byId = new Map<number, ProductRow>(found.map((p: ProductRow) => [p.id, p]));
 
   const lines = payload.items
     .map((item) => {
@@ -545,7 +551,7 @@ export async function createOrder(payload: CheckoutPayload) {
   return order;
 }
 
-export async function getOrderByNumber(orderNumber: string) {
+export async function getOrderByNumber(orderNumber: string): Promise<(OrderRow & { items: OrderItemRow[] }) | null> {
   try {
     await ensureSeeded();
     const rows = await db
@@ -563,7 +569,7 @@ export async function getOrderByNumber(orderNumber: string) {
   }
 }
 
-export async function listOrders(status?: string) {
+export async function listOrders(status?: string): Promise<OrderRow[]> {
   try {
     await ensureSeeded();
     const where = status && status !== "all" ? eq(orders.status, status) : undefined;
@@ -574,7 +580,7 @@ export async function listOrders(status?: string) {
   }
 }
 
-export async function getOrderWithItems(id: number) {
+export async function getOrderWithItems(id: number): Promise<{ order: OrderRow; items: OrderItemRow[] } | null> {
   try {
     const rows = await db.select().from(orders).where(eq(orders.id, id)).limit(1);
     if (!rows[0]) return null;
@@ -586,7 +592,7 @@ export async function getOrderWithItems(id: number) {
   }
 }
 
-export async function updateOrderStatus(id: number, status: string) {
+export async function updateOrderStatus(id: number, status: string): Promise<OrderRow | null> {
   try {
     await db.update(orders).set({ status }).where(eq(orders.id, id));
     const rows = await db.select().from(orders).where(eq(orders.id, id)).limit(1);
@@ -610,7 +616,17 @@ export async function deleteOrder(id: number) {
  * Admin order notifications. An order stops being a notification the moment it
  * is processed (status leaves "pending") or is deleted from order history.
  */
-export async function listOrderNotifications() {
+export async function listOrderNotifications(): Promise<
+  Array<{
+    id: number;
+    orderNumber: string;
+    customerName: string;
+    city: string;
+    total: number;
+    status: string;
+    createdAt: Date;
+  }>
+> {
   try {
     await ensureSeeded();
     return await db
@@ -635,7 +651,12 @@ export async function listOrderNotifications() {
 
 /* -------------------------------- admin ---------------------------------- */
 
-export async function getAdminStats() {
+export async function getAdminStats(): Promise<{
+  products: { total: number; active: number; lowStock: number; inventoryValue: number };
+  orders: { total: number; pending: number; revenue: number };
+  recentOrders: OrderRow[];
+  topGroups: { group: string; value: number }[];
+}> {
   try {
     await ensureSeeded();
     const [productAgg] = await db
@@ -735,7 +756,7 @@ export async function createContactMessage(input: ContactMessageInput) {
   }
 }
 
-export async function listContactMessages(filters: ContactMessageFilters = {}) {
+export async function listContactMessages(filters: ContactMessageFilters = {}): Promise<ContactMessageRow[]> {
   try {
     await ensureSeeded();
     const conditions = [];
@@ -787,7 +808,7 @@ export async function getUnreadContactMessagesCount(): Promise<number> {
   }
 }
 
-export async function updateContactMessageReadStatus(id: number, isRead: boolean) {
+export async function updateContactMessageReadStatus(id: number, isRead: boolean): Promise<ContactMessageRow | null> {
   try {
     await db.update(contactMessages).set({ isRead }).where(eq(contactMessages.id, id));
     const rows = await db.select().from(contactMessages).where(eq(contactMessages.id, id)).limit(1);
