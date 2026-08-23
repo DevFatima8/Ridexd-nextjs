@@ -75,7 +75,11 @@ export function SiteHeader({ categories = [] }: { categories?: CategoryWithCount
             <img
               src="/logo.png"
               alt="Ridexd.com"
-              className="h-10 md:h-12 w-auto object-contain"
+              className="h-10 md:h-12 w-auto object-contain transition-transform hover:scale-105"
+              style={{
+                filter:
+                  "drop-shadow(1px 0 0 #000) drop-shadow(-1px 0 0 #000) drop-shadow(0 1px 0 #000) drop-shadow(0 -1px 0 #000) drop-shadow(0 0 2px rgba(0,0,0,0.5))",
+              }}
             />
           </Link>
 
