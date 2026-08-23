@@ -6,30 +6,7 @@ import type { AnyColumn } from "drizzle-orm";
 import { CATEGORIES } from "./catalog";
 import { SEED_PRODUCTS } from "./seed-data";
 
-const FALLBACK_PRODUCTS: ProductRow[] = SEED_PRODUCTS.map((p, idx) => ({
-  id: idx + 1,
-  slug: p.slug,
-  title: p.title,
-  subtitle: p.subtitle,
-  description: p.description ?? null,
-  groupSlug: p.groupSlug,
-  categorySlug: p.categorySlug,
-  price: p.price,
-  compareAtPrice: p.compareAtPrice ?? 0,
-  cost: p.cost ?? 0,
-  sku: p.sku ?? "",
-  barcode: "",
-  stock: p.stock ?? 50,
-  sizes: p.sizes,
-  images: p.images,
-  fabric: p.fabric ?? "",
-  colorFamily: p.colorFamily ?? "",
-  status: p.status ?? "active",
-  featured: p.featured ?? false,
-  vendor: p.vendor ?? "Ridexd",
-  createdAt: new Date(),
-  updatedAt: new Date(),
-}));
+const FALLBACK_PRODUCTS: ProductRow[] = [];
 
 function getFallbackProducts(filters: ProductFilters = {}) {
   const page = Math.max(1, filters.page ?? 1);
@@ -146,19 +123,6 @@ async function seedOnce(): Promise<void> {
       );
   }
 
-  const [{ value: productCount }] = await db.select({ value: count() }).from(products);
-  if (Number(productCount) === 0) {
-    for (let i = 0; i < SEED_PRODUCTS.length; i += 25) {
-      await db
-        .insert(products)
-        .values(
-          SEED_PRODUCTS.slice(i, i + 25).map((p) => ({
-            ...p,
-            barcode: "",
-          })),
-        );
-    }
-  }
   isSeeded = true;
 }
 
