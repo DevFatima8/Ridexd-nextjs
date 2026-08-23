@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useState, type ReactNode } from "react";
+import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { AdminNotifications } from "./admin-notifications";
 import { GROUPS } from "@/lib/catalog";
 import { useConfirm } from "@/components/confirm-provider";
@@ -13,6 +13,7 @@ const NAV = [
   { href: "/admin/products", label: "Products", icon: "🏷" },
   { href: "/admin/categories", label: "Categories", icon: "🗂" },
   { href: "/admin/customers", label: "Customers", icon: "👥" },
+  { href: "/admin/messages", label: "Messages", icon: "💬" },
 ];
 
 export function AdminShell({ children }: { children: ReactNode }) {
@@ -20,6 +21,32 @@ export function AdminShell({ children }: { children: ReactNode }) {
   const router = useRouter();
   const confirm = useConfirm();
   const [open, setOpen] = useState(false);
+  const [unreadMessages, setUnreadMessages] = useState<number>(0);
+
+  const fetchUnreadMessages = useCallback(async () => {
+    try {
+      const res = await fetch("/api/admin/contact-messages/unread-count", { cache: "no-store" });
+      if (!res.ok) return;
+      const data = await res.json();
+      if (typeof data.unreadCount === "number") {
+        setUnreadMessages(data.unreadCount);
+      }
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
+  useEffect(() => {
+    if (pathname === "/admin/login") return;
+    fetchUnreadMessages();
+    const interval = setInterval(fetchUnreadMessages, 15000);
+    const handler = () => fetchUnreadMessages();
+    window.addEventListener("ridexd:messages-updated", handler);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener("ridexd:messages-updated", handler);
+    };
+  }, [pathname, fetchUnreadMessages]);
 
   if (pathname === "/admin/login") {
     return <div className="min-h-screen bg-[#f4f5f7]">{children}</div>;
@@ -62,17 +89,25 @@ export function AdminShell({ children }: { children: ReactNode }) {
               {NAV.map((item) => {
                 const active =
                   item.href === "/admin" ? pathname === "/admin" : pathname.startsWith(item.href);
+                const isMessages = item.href === "/admin/messages";
                 return (
                   <Link
                     key={item.href}
                     href={item.href}
                     onClick={() => setOpen(false)}
-                    className={`flex items-center gap-3 rounded px-2.5 py-2 text-[13px] transition ${
+                    className={`flex items-center justify-between rounded px-2.5 py-2 text-[13px] transition ${
                       active ? "bg-[#303335] text-white" : "hover:bg-[#26292b]"
                     }`}
                   >
-                    <span className="w-4 text-center opacity-80">{item.icon}</span>
-                    {item.label}
+                    <div className="flex items-center gap-3">
+                      <span className="w-4 text-center opacity-80">{item.icon}</span>
+                      <span>{item.label}</span>
+                    </div>
+                    {isMessages && unreadMessages > 0 && (
+                      <span className="flex h-4 min-w-[16px] items-center justify-center rounded-full bg-[#d72c0d] px-1 text-[10px] font-bold text-white">
+                        {unreadMessages > 99 ? "99+" : unreadMessages}
+                      </span>
+                    )}
                   </Link>
                 );
               })}

@@ -1,0 +1,111 @@
+import { pool } from "@/db";
+
+export const dynamic = "force-dynamic";
+
+export async function GET() {
+  try {
+    // 1. Create categories table
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS \`categories\` (
+        \`id\`          INT AUTO_INCREMENT PRIMARY KEY,
+        \`group_slug\`  VARCHAR(40)  NOT NULL,
+        \`slug\`        VARCHAR(80)  NOT NULL,
+        \`name\`        VARCHAR(120) NOT NULL,
+        \`tagline\`     VARCHAR(200) NOT NULL DEFAULT '',
+        \`description\` TEXT         NULL,
+        \`image_url\`   TEXT         NULL,
+        \`sort_order\`  INT          NOT NULL DEFAULT 0,
+        \`created_at\`  TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE KEY \`uniq_categories_group_slug\` (\`group_slug\`, \`slug\`),
+        KEY \`idx_categories_group\` (\`group_slug\`)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    `);
+
+    // 2. Create products table
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS \`products\` (
+        \`id\`               INT AUTO_INCREMENT PRIMARY KEY,
+        \`slug\`             VARCHAR(140) NOT NULL UNIQUE,
+        \`title\`            VARCHAR(200) NOT NULL,
+        \`subtitle\`         VARCHAR(200) NOT NULL DEFAULT '',
+        \`description\`      TEXT         NULL,
+        \`group_slug\`       VARCHAR(40)  NOT NULL,
+        \`category_slug\`    VARCHAR(80)  NOT NULL,
+        \`price\`            INT          NOT NULL DEFAULT 0,
+        \`compare_at_price\` INT          NOT NULL DEFAULT 0,
+        \`cost\`             INT          NOT NULL DEFAULT 0,
+        \`sku\`              VARCHAR(60)  NOT NULL DEFAULT '',
+        \`barcode\`          VARCHAR(60)  NOT NULL DEFAULT '',
+        \`stock\`            INT          NOT NULL DEFAULT 0,
+        \`sizes\`            JSON         NOT NULL,
+        \`images\`           JSON         NOT NULL,
+        \`fabric\`           VARCHAR(120) NOT NULL DEFAULT '',
+        \`color_family\`     VARCHAR(60)  NOT NULL DEFAULT '',
+        \`status\`           VARCHAR(20)  NOT NULL DEFAULT 'active',
+        \`featured\`         TINYINT(1)   NOT NULL DEFAULT 0,
+        \`vendor\`           VARCHAR(80)  NOT NULL DEFAULT 'Ridexd',
+        \`created_at\`       TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        \`updated_at\`       TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        KEY \`idx_products_group\` (\`group_slug\`),
+        KEY \`idx_products_category\` (\`category_slug\`),
+        KEY \`idx_products_status\` (\`status\`)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    `);
+
+    // 3. Create orders table
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS \`orders\` (
+        \`id\`             INT AUTO_INCREMENT PRIMARY KEY,
+        \`order_number\`   VARCHAR(40)  NOT NULL UNIQUE,
+        \`customer_name\`  VARCHAR(140) NOT NULL,
+        \`email\`          VARCHAR(160) NOT NULL,
+        \`phone\`          VARCHAR(40)  NOT NULL DEFAULT '',
+        \`address\`        TEXT         NULL,
+        \`city\`           VARCHAR(80)  NOT NULL DEFAULT '',
+        \`postal_code\`    VARCHAR(30)  NOT NULL DEFAULT '',
+        \`notes\`          TEXT         NULL,
+        \`payment_method\` VARCHAR(40)  NOT NULL DEFAULT 'cod',
+        \`subtotal\`       INT          NOT NULL DEFAULT 0,
+        \`shipping\`       INT          NOT NULL DEFAULT 0,
+        \`total\`          INT          NOT NULL DEFAULT 0,
+        \`status\`         VARCHAR(24)  NOT NULL DEFAULT 'pending',
+        \`created_at\`     TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        KEY \`idx_orders_status\` (\`status\`),
+        KEY \`idx_orders_email\` (\`email\`)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    `);
+
+    // 4. Create order_items table
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS \`order_items\` (
+        \`id\`         INT AUTO_INCREMENT PRIMARY KEY,
+        \`order_id\`   INT          NOT NULL,
+        \`product_id\` INT          NOT NULL,
+        \`title\`      VARCHAR(200) NOT NULL,
+        \`variant\`    VARCHAR(60)  NOT NULL DEFAULT '',
+        \`image_url\`  TEXT         NULL,
+        \`unit_price\` INT          NOT NULL DEFAULT 0,
+        \`quantity\`   INT          NOT NULL DEFAULT 1,
+        \`line_total\` INT          NOT NULL DEFAULT 0,
+        KEY \`idx_items_order\` (\`order_id\`),
+        CONSTRAINT \`fk_items_order\` FOREIGN KEY (\`order_id\`) REFERENCES \`orders\` (\`id\`) ON DELETE CASCADE
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    `);
+
+    const [tables] = await pool.query("SHOW TABLES;");
+
+    return Response.json({
+      ok: true,
+      message: "✅ Database tables created successfully!",
+      tables,
+    });
+  } catch (error: any) {
+    return Response.json(
+      {
+        ok: false,
+        error: error.message || String(error),
+      },
+      { status: 500 }
+    );
+  }
+}
