@@ -27,7 +27,7 @@ The cart is stored in `localStorage` (CartProvider + slide-out drawer) so it sur
 
 ## Admin panel (Shopify-style)
 
-URL: **`/admin`** → password login (`ADMIN_PASSWORD`, default `ridexd2026`).
+URL: **`/admin`** → password login (`ADMIN_PASSWORD`, default `Admin@123`).
 
 * `/admin` — dashboard: revenue, orders to fulfil, product count, inventory value, recent orders, department breakdown
 * `/admin/products` — table with search, department/status filters, pagination, duplicate + delete row actions
