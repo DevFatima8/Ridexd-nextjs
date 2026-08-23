@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { SOCIAL_LINKS } from "@/lib/catalog";
 
 type FormErrors = {
   name?: string;
@@ -288,6 +289,39 @@ export default function ContactPage() {
               <p className="mt-1 text-xs leading-relaxed text-ink-soft">
                 2–5 working days nationwide · PKR 250 flat fee · Free shipping on orders above PKR 5,000.
               </p>
+            </div>
+
+            <div className="border-t border-sand pt-4">
+              <p className="text-[11px] font-semibold tracking-[0.2em] text-[#a88242] uppercase">Social Media</p>
+              <div className="mt-2 flex flex-col gap-2 text-xs">
+                <a
+                  href={SOCIAL_LINKS.instagram}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex items-center gap-2 font-medium text-ink hover:text-[#00a0ac] transition"
+                >
+                  <span>📸</span>
+                  <span>Instagram (@ridexd.com1)</span>
+                </a>
+                <a
+                  href={SOCIAL_LINKS.facebook}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex items-center gap-2 font-medium text-ink hover:text-[#00a0ac] transition"
+                >
+                  <span>📘</span>
+                  <span>Facebook Page</span>
+                </a>
+                <a
+                  href={SOCIAL_LINKS.tiktok}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex items-center gap-2 font-medium text-ink hover:text-[#00a0ac] transition"
+                >
+                  <span>🎵</span>
+                  <span>TikTok (@ridexd.com)</span>
+                </a>
+              </div>
             </div>
           </div>
         </aside>
