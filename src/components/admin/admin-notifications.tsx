@@ -39,7 +39,9 @@ export function AdminNotifications() {
   }, []);
 
   useEffect(() => {
-    load();
+    queueMicrotask(() => {
+      void load();
+    });
     const poll = setInterval(load, 15000);
     const refresh = () => load();
     window.addEventListener("ridexd:orders-updated", refresh);
