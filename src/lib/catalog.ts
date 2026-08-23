@@ -312,3 +312,10 @@ export function shippingFor(subtotal: number): number {
 
 export const MAX_PRODUCT_IMAGES = 20;
 export const WHATSAPP_NUMBER = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? "923000000000";
+
+export const SOCIAL_LINKS = {
+  tiktok: "https://www.tiktok.com/@ridexd.com?_r=1&_t=ZS-9960OqoC8dr",
+  facebook: "https://www.facebook.com/share/p/1B6qpsYiGC/",
+  instagram: "https://www.instagram.com/stories/ridexd.com1/3969374579644731136_40781763528/",
+};
+

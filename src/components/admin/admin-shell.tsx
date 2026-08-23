@@ -76,9 +76,11 @@ export function AdminShell({ children }: { children: ReactNode }) {
         >
           <div>
             <div className="flex items-center gap-2 px-2">
-              <span className="flex h-8 w-8 items-center justify-center rounded bg-[#00a0ac] text-sm font-bold text-white">
-                R
-              </span>
+              <img
+                src="/logo.png"
+                alt="Ridexd Admin"
+                className="h-8 w-auto max-w-[32px] object-contain rounded bg-white/10 p-0.5"
+              />
               <div className="leading-tight">
                 <p className="text-sm font-semibold">Ridexd Admin</p>
                 <p className="text-[10px] text-[#9aa0a6]">ridexd.com</p>
