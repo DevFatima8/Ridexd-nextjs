@@ -6,7 +6,13 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "db:create-tables": "node scripts/create-tables.mjs",
+    "db:seed": "npx tsx scripts/seed.ts",
+    "db:setup": "node scripts/create-tables.mjs && npx tsx scripts/seed.ts",
+    "db:push": "drizzle-kit push",
+    "use-mysql": "node scripts/use-mysql.mjs",
+    "use-postgres": "node scripts/use-postgres.mjs"
   },
   "dependencies": {
     "dotenv": "17.3.1",

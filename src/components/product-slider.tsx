@@ -24,10 +24,7 @@ export function ProductSlider({ products }: { products: ProductRow[] }) {
   }, []);
 
   const maxIndex = Math.max(0, products.length - perView);
-
-  useEffect(() => {
-    setIndex((current) => Math.min(current, maxIndex));
-  }, [maxIndex]);
+  const currentIndex = Math.min(index, maxIndex);
 
   useEffect(() => {
     if (paused || maxIndex === 0) return;
@@ -48,7 +45,7 @@ export function ProductSlider({ products }: { products: ProductRow[] }) {
       <div className="overflow-hidden">
         <div
           className="flex transition-transform duration-700 ease-in-out"
-          style={{ transform: `translateX(-${(index * 100) / perView}%)` }}
+          style={{ transform: `translateX(-${(currentIndex * 100) / perView}%)` }}
         >
           {products.map((product) => (
             <div
@@ -87,7 +84,7 @@ export function ProductSlider({ products }: { products: ProductRow[] }) {
             aria-label={`Go to slide ${dot + 1}`}
             onClick={() => setIndex(dot)}
             className={`h-1.5 rounded-full transition-all ${
-              dot === index ? "w-7 bg-ink" : "w-1.5 bg-sand hover:bg-gold"
+              dot === currentIndex ? "w-7 bg-ink" : "w-1.5 bg-sand hover:bg-gold"
             }`}
           />
         ))}

@@ -17,8 +17,10 @@ export function SiteHeader({ categories = [] }: { categories?: CategoryWithCount
   const pathname = usePathname();
 
   useEffect(() => {
-    setMobileOpen(false);
-    setOpenMenu(null);
+    queueMicrotask(() => {
+      setMobileOpen(false);
+      setOpenMenu(null);
+    });
   }, [pathname]);
 
   useEffect(() => {

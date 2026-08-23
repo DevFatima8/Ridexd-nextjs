@@ -17,7 +17,8 @@ CREATE TABLE IF NOT EXISTS `categories` (
   `image_url`   TEXT         NULL,
   `sort_order`  INT          NOT NULL DEFAULT 0,
   `created_at`  TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  UNIQUE KEY `uniq_categories_group_slug` (`group_slug`, `slug`)
+  UNIQUE KEY `uniq_categories_group_slug` (`group_slug`, `slug`),
+  KEY `idx_categories_group` (`group_slug`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS `products` (

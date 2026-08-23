@@ -18,6 +18,7 @@ if (!databaseUrl) {
 
 const globalForDb = globalThis as typeof globalThis & {
   __ridexdMysqlPool?: mysql.Pool;
+  __ridexdDb?: any;
 };
 
 export const pool =
@@ -25,13 +26,24 @@ export const pool =
   mysql.createPool({
     uri: databaseUrl,
     connectionLimit: 10,
+    maxIdle: 10,
+    idleTimeout: 60000,
+    queueLimit: 0,
     waitForConnections: true,
+    enableKeepAlive: true,
+    keepAliveInitialDelay: 0,
     charset: "utf8mb4_unicode_ci",
     timezone: "Z",
+    connectTimeout: 10000,
   });
 
 if (process.env.NODE_ENV !== "production") {
   globalForDb.__ridexdMysqlPool = pool;
 }
 
-export const db = drizzle(pool);
+export const db = globalForDb.__ridexdDb ?? drizzle(pool);
+
+if (process.env.NODE_ENV !== "production") {
+  globalForDb.__ridexdDb = db;
+}
+
