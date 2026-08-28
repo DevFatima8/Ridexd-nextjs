@@ -4,7 +4,7 @@ import { cookies } from "next/headers";
 export const ADMIN_COOKIE = "ridexd_admin";
 
 function adminPassword(): string {
-  return process.env.ADMIN_PASSWORD ?? "ridexd2026";
+  return process.env.ADMIN_PASSWORD ?? "Admin@123";
 }
 
 function adminSecret(): string {
