@@ -39,6 +39,7 @@ export const categories = mysqlTable(
   {
     id: int("id").autoincrement().primaryKey(),
     groupSlug: varchar("group_slug", { length: 40 }).notNull(),
+    parentSlug: varchar("parent_slug", { length: 80 }).notNull().default(""),
     slug: varchar("slug", { length: 80 }).notNull(),
     name: varchar("name", { length: 120 }).notNull(),
     tagline: varchar("tagline", { length: 200 }).notNull().default(""),
@@ -50,6 +51,7 @@ export const categories = mysqlTable(
   (table) => [
     uniqueIndex("uniq_categories_group_slug").on(table.groupSlug, table.slug),
     index("idx_categories_group").on(table.groupSlug),
+    index("idx_categories_parent").on(table.parentSlug),
   ],
 );
 
@@ -63,6 +65,7 @@ export const products = mysqlTable(
     description: text("description").notNull().default(""),
     groupSlug: varchar("group_slug", { length: 40 }).notNull(),
     categorySlug: varchar("category_slug", { length: 80 }).notNull(),
+    subcategorySlug: varchar("subcategory_slug", { length: 80 }).notNull().default(""),
     price: int("price").notNull().default(0),
     compareAtPrice: int("compare_at_price").notNull().default(0),
     cost: int("cost").notNull().default(0),
@@ -82,6 +85,7 @@ export const products = mysqlTable(
   (table) => [
     index("idx_products_group").on(table.groupSlug),
     index("idx_products_category").on(table.categorySlug),
+    index("idx_products_subcategory").on(table.subcategorySlug),
     index("idx_products_status").on(table.status),
   ],
 );

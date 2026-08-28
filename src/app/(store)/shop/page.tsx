@@ -25,31 +25,39 @@ export default async function ShopPage({ searchParams }: { searchParams: SearchP
   const params = await searchParams;
   const group = pick(params, "group");
   const category = pick(params, "category");
+  const subcategory = pick(params, "subcategory");
   const q = pick(params, "q");
   const sort = pick(params, "sort") || "newest";
   const page = Math.max(1, Number(pick(params, "page") || 1));
 
   const [result, counts, categories] = await Promise.all([
-    listProducts({ group, category, q, sort, page, pageSize: 12, status: "active" }),
+    listProducts({ group, category, subcategory, q, sort, page, pageSize: 12, status: "active" }),
     getGroupCounts(),
     getCategoryOverview(),
   ]);
 
-  const heading = category
-    ? categoryLabel(group, category)
-    : group
-      ? GROUP_MAP[group]?.name ?? "Shop"
-      : "All products";
+  const heading = subcategory
+    ? categoryLabel(group, category, subcategory)
+    : category
+      ? categoryLabel(group, category)
+      : group
+        ? GROUP_MAP[group]?.name ?? "Shop"
+        : "All products";
 
   function pageHref(target: number) {
     const search = new URLSearchParams();
     if (group) search.set("group", group);
     if (category) search.set("category", category);
+    if (subcategory) search.set("subcategory", subcategory);
     if (q) search.set("q", q);
     if (sort) search.set("sort", sort);
     search.set("page", String(target));
     return `/shop?${search.toString()}`;
   }
+
+  const groupCats = group ? categories.filter((cat) => cat.groupSlug === group) : categories;
+  const topCats = groupCats.filter((cat) => !cat.parentSlug);
+  const subCats = category ? groupCats.filter((cat) => cat.parentSlug === category) : [];
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-10">
@@ -65,6 +73,20 @@ export default async function ShopPage({ searchParams }: { searchParams: SearchP
             </Link>
           </>
         )}
+        {category && (
+          <>
+            <span className="mx-2">/</span>
+            <Link href={`/shop?group=${group}&category=${category}`} className="hover:text-ink">
+              {categoryLabel(group, category)}
+            </Link>
+          </>
+        )}
+        {subcategory && (
+          <>
+            <span className="mx-2">/</span>
+            <span className="text-ink font-medium">{categoryLabel(group, category, subcategory)}</span>
+          </>
+        )}
       </nav>
 
       <div className="mt-6 flex flex-wrap items-end justify-between gap-4">
@@ -73,22 +95,52 @@ export default async function ShopPage({ searchParams }: { searchParams: SearchP
           <p className="mt-2 text-sm text-ink-soft/70">
             {result.total} products
             {q ? ` matching “${q}”` : ""}
-            {group ? ` in ${GROUP_MAP[group]?.name ?? group}` : " across all departments"}
+            {subcategory
+              ? ` in ${categoryLabel(group, category, subcategory)}`
+              : category
+                ? ` in ${categoryLabel(group, category)}`
+                : group
+                  ? ` in ${GROUP_MAP[group]?.name ?? group}`
+                  : " across all departments"}
           </p>
         </div>
         {group && (
           <div className="flex flex-wrap gap-2">
-            {categories.filter((cat) => cat.groupSlug === group).map((cat) => (
-              <Link
-                key={cat.id}
-                href={`/shop?group=${group}&category=${cat.categorySlug}`}
-                className={`rounded-full border px-4 py-2 text-[11px] tracking-[0.16em] uppercase transition ${
-                  category === cat.categorySlug ? "border-ink bg-ink text-white" : "border-sand hover:border-ink"
-                }`}
-              >
-                {cat.name}
-              </Link>
-            ))}
+            {subCats.length > 0 ? (
+              <>
+                <Link
+                  href={`/shop?group=${group}&category=${category}`}
+                  className={`rounded-full border px-4 py-2 text-[11px] tracking-[0.16em] uppercase transition ${
+                    !subcategory ? "border-ink bg-ink text-white" : "border-sand hover:border-ink"
+                  }`}
+                >
+                  All {categoryLabel(group, category)}
+                </Link>
+                {subCats.map((sc) => (
+                  <Link
+                    key={sc.id}
+                    href={`/shop?group=${group}&category=${category}&subcategory=${sc.categorySlug}`}
+                    className={`rounded-full border px-4 py-2 text-[11px] tracking-[0.16em] uppercase transition ${
+                      subcategory === sc.categorySlug ? "border-ink bg-ink text-white" : "border-sand hover:border-ink"
+                    }`}
+                  >
+                    {sc.name}
+                  </Link>
+                ))}
+              </>
+            ) : (
+              topCats.map((cat) => (
+                <Link
+                  key={cat.id}
+                  href={`/shop?group=${group}&category=${cat.categorySlug}`}
+                  className={`rounded-full border px-4 py-2 text-[11px] tracking-[0.16em] uppercase transition ${
+                    category === cat.categorySlug ? "border-ink bg-ink text-white" : "border-sand hover:border-ink"
+                  }`}
+                >
+                  {cat.name}
+                </Link>
+              ))
+            )}
           </div>
         )}
       </div>
@@ -99,6 +151,7 @@ export default async function ShopPage({ searchParams }: { searchParams: SearchP
             <ShopFilters
               group={group}
               category={category}
+              subcategory={subcategory}
               sort={sort}
               q={q}
               counts={counts}

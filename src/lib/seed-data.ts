@@ -67,37 +67,101 @@ const KID_SIZES = ["2-3Y", "4-5Y", "6-7Y", "8-9Y", "10-11Y"];
 const BABY_SIZES = ["0-3M", "3-6M", "6-12M", "12-18M", "18-24M"];
 const LINEN_SIZES = ["Single", "Queen", "King"];
 
+export type SeedProduct = {
+  slug: string;
+  title: string;
+  subtitle: string;
+  description: string;
+  groupSlug: GroupSlug;
+  categorySlug: string;
+  subcategorySlug: string;
+  price: number;
+  compareAtPrice: number;
+  cost: number;
+  sku: string;
+  stock: number;
+  sizes: string[];
+  images: string[];
+  fabric: string;
+  colorFamily: string;
+  status: string;
+  featured: boolean;
+  vendor: string;
+};
+
 const SEED: Record<GroupSlug, Record<string, Draft[]>> = {
   women: {
-    stitched: [
-      ["Mehak Embroidered Shalwar Kameez", "3 piece stitched suit", 6450, 8200, "Embroidered Lawn", "Sage Green", 0, 1],
-      ["Noor Chikankari Shalwar Kameez", "2 piece with straight shalwar", 5290, 6900, "Chikankari Cotton", "Ivory", 1, 3],
-      ["Zeenat Digital Print Shalwar Kameez", "3 piece with chiffon dupatta", 4890, 5990, "Digital Lawn", "Coral Pink", 3, 4],
-      ["Sana Formal Shalwar Kameez", "Sequin neckline, stitched", 9750, 12500, "Net & Silk", "Deep Teal", 2, 5],
+    "stitched-1-pc": [
+      ["Kurti Stitched Lawn Shirt", "1 PC stitched kurti", 2850, 3600, "Embroidered Lawn", "Rose Pink", 0, 1],
+      ["Printed Daily Wear Kurti", "1 PC straight fit kurti", 2490, 3200, "Digital Lawn", "Mint Green", 1, 3],
     ],
-    unstitched: [
-      ["Premium Lawn Shalwar Kameez Fabric", "Kameez, dupatta & shalwar", 4250, 5500, "Premium Lawn", "Pastel Blue", 9, 1],
-      ["Boski Shalwar Kameez Suiting", "4.5 metre unstitched", 5450, 6800, "Boski", "Charcoal", 9, 4],
-      ["Jacquard Khaddar Shalwar Kameez", "Winter 3 piece roll", 3950, 4800, "Khaddar Jacquard", "Maroon", 9, 6],
-      ["Silk Chiffon Shalwar Kameez Set", "Dyeable premium 3 piece", 6750, 8500, "Chiffon Silk", "Champagne", 9, 8],
+    "stitched-2-pc": [
+      ["Noor Chikankari 2 PC Suit", "Stitched shirt with straight trouser", 5290, 6900, "Chikankari Cotton", "Ivory", 1, 3],
+      ["Zeenat Floral 2 PC Suit", "Stitched kameez with chiffon dupatta", 4890, 5990, "Digital Lawn", "Coral Pink", 3, 4],
     ],
-    "luxury-pret": [
-      ["Maharani Bridal Shalwar Kameez", "Hand embellished zardozi", 42500, 58000, "Raw Silk & Zardozi", "Bridal Red", 2, 7],
-      ["Velvet Luxury Pret Shalwar Kameez", "Signature couture edit", 24500, 31000, "Velvet", "Emerald", 7, 2],
-      ["Zardozi Shalwar Kameez with Cape", "Cape kameez with shalwar", 18900, 24000, "Silk Organza", "Pearl White", 5, 7],
-      ["Couture Net Shalwar Kameez", "Hand stone embroidery", 15900, 19900, "Net", "Dusty Rose", 8, 2],
+    "stitched-3-pc": [
+      ["Mehak Embroidered 3 PC Suit", "Complete 3 piece stitched suit", 6450, 8200, "Embroidered Lawn", "Sage Green", 0, 1],
+      ["Sana Formal 3 PC Suit", "Sequin neckline stitched suit", 9750, 12500, "Net & Silk", "Deep Teal", 2, 5],
     ],
-    "kurta-sets": [
-      ["Everyday Cotton Kurta Shalwar", "Kurta kameez with shalwar", 3290, 4200, "Cotton Cambric", "Off White", 3, 1],
-      ["Aisha Printed Kurta Shalwar", "Straight cut 2 piece", 3650, 4500, "Viscose Lawn", "Turquoise", 4, 3],
-      ["Longline Kurta Shalwar Set", "Office ready 3 piece", 4590, 5600, "Slub Cotton", "Mustard", 6, 4],
-      ["Linen Kurta Shalwar Set", "Breathable summer edit", 4950, 6200, "Linen Blend", "Sand Beige", 1, 6],
+    "stitched-luxury": [
+      ["Maharani Velvet Luxury Suit", "Hand embellished couture edit", 24500, 31000, "Velvet", "Emerald", 7, 2],
+      ["Couture Net Luxury Suit", "Hand stone embroidery stitched", 15900, 19900, "Net", "Dusty Rose", 8, 2],
     ],
-    "shawls-dupattas": [
-      ["Kashmiri Pashmina Shawl", "Hand woven winter wrap", 8900, 11500, "Pashmina", "Walnut Brown", 5, 8],
-      ["Jacquard Wool Shawl", "Dual tone wrap", 4990, 6500, "Wool Blend", "Rust", 8, 5],
-      ["Chiffon Embroidered Dupatta", "Festive scallop border", 2650, 3400, "Chiffon", "Blush", 7, 1],
-      ["Silk Blend Wrap Shawl", "Sheer everyday dupatta", 3290, 4100, "Silk Blend", "Lilac", 4, 7],
+    "unstitched-1-pc": [
+      ["Printed Lawn Shirt Piece", "1 PC unstitched 2.5m fabric", 1950, 2500, "Premium Lawn", "Sky Blue", 9, 1],
+      ["Boski Unstitched Shirt Roll", "1 PC unstitched suiting", 2650, 3400, "Boski", "Charcoal", 9, 4],
+    ],
+    "unstitched-2-pc": [
+      ["Lawn Shirt & Chiffon Dupatta", "2 PC unstitched fabric set", 3250, 4200, "Digital Lawn", "Peach", 9, 3],
+      ["Khaddar Shirt & Trouser Roll", "2 PC winter unstitched", 3450, 4500, "Khaddar", "Maroon", 9, 6],
+    ],
+    "unstitched-3-pc": [
+      ["Premium Lawn 3 PC Unstitched", "Kameez, dupatta & shalwar roll", 4250, 5500, "Premium Lawn", "Pastel Blue", 9, 1],
+      ["Jacquard Khaddar 3 PC Roll", "Winter 3 piece fabric set", 3950, 4800, "Khaddar Jacquard", "Mustard", 9, 6],
+    ],
+    "unstitched-luxury": [
+      ["Zardozi Organza Luxury Unstitched", "Heavy embroidered 3 piece", 18900, 24000, "Silk Organza", "Pearl White", 5, 7],
+      ["Silk Chiffon Luxury Unstitched", "Dyeable couture 3 piece", 6750, 8500, "Chiffon Silk", "Champagne", 9, 8],
+    ],
+    "bottoms-trouser": [
+      ["Cotton Straight Trouser", "Stitched everyday trouser", 1650, 2100, "Cotton Cambric", "Off White", 3, 1],
+      ["Embroidered Tulip Trouser", "Scalloped hem trouser", 1990, 2600, "Slub Cotton", "Black", 6, 4],
+    ],
+    "bottoms-pants": [
+      ["Cigarette Fit Pants", "Tailored ankle pants", 1850, 2400, "Cotton Twill", "Beige", 1, 6],
+      ["Palazzo Flare Pants", "Relaxed wide leg pants", 1950, 2550, "Viscose Lawn", "Navy", 4, 3],
+    ],
+    "bottoms-tights": [
+      ["Stretch Cotton Tights", "Soft elasticated tights", 990, 1400, "Jersey Cotton", "Black", 2, 0],
+      ["Ankle Length Jersey Tights", "Everyday fit tights", 1150, 1550, "Stretch Jersey", "White", 0, 3],
+    ],
+    "3-pc-sets-shirt": [
+      ["Embroidered Lawn Shirt", "3 PC matching shirt piece", 2950, 3800, "Embroidered Lawn", "Turquoise", 4, 3],
+      ["Printed Lawn Long Kameez", "3 PC set shirt piece", 2750, 3500, "Digital Lawn", "Lilac", 7, 1],
+    ],
+    "3-pc-sets-dupatta": [
+      ["Digital Chiffon Dupatta", "3 PC designer dupatta", 1850, 2400, "Chiffon", "Blush Pink", 7, 1],
+      ["Pashmina Shawl Wrap", "3 PC winter dupatta shawl", 3290, 4200, "Pashmina Blend", "Walnut Brown", 5, 8],
+    ],
+    "3-pc-sets-trouser": [
+      ["Cambric Dyed Trouser", "3 PC matching bottom", 1450, 1900, "Cambric Cotton", "Off White", 3, 1],
+      ["Dyed Shalwar Piece", "3 PC stitched shalwar", 1550, 2000, "Cotton Lawn", "White", 2, 4],
+    ],
+    "1-pc-kurti": [
+      ["Digital Print Lawn Kurti", "Single embroidered kurti", 2250, 2900, "Digital Lawn", "Yellow", 4, 0],
+      ["Short Summer Kurti", "Casual daily kurti", 1950, 2600, "Cotton Cambric", "Sage", 0, 3],
+    ],
+    "1-pc-kurti-sets": [
+      ["Embroidered Kurti & Scarf Set", "1 PC kurti with matching scarf", 3290, 4200, "Viscose Cotton", "Sand Beige", 1, 6],
+      ["Aisha Printed Kurta Set", "1 PC tunic set", 3650, 4500, "Viscose Lawn", "Turquoise", 4, 3],
+    ],
+    "separate-kameez-shirt": [
+      ["Classic Lawn Kameez", "Separate stitched shirt", 2450, 3100, "Lawn", "Pastel Green", 3, 1],
+      ["Embroidered Organza Shirt", "Separate party shirt", 4590, 5800, "Organza", "Dusty Pink", 8, 2],
+    ],
+    "separate-shalwar-trouser": [
+      ["Tulip Shalwar Separate", "Stitched separate tulip shalwar", 1750, 2300, "Cotton", "White", 2, 4],
+      ["Patiala Shalwar Separate", "Pleated separate shalwar", 1890, 2450, "Cambric", "Black", 1, 6],
     ],
   },
   men: {
@@ -241,27 +305,6 @@ const SIZES_BY_GROUP: Record<GroupSlug, string[]> = {
 const IMG: Record<GroupSlug, string[]> = { women: W, men: M, kids: K, bed: H, bath: H };
 const BABY_CATEGORIES = ["baby"];
 
-export type SeedProduct = {
-  slug: string;
-  title: string;
-  subtitle: string;
-  description: string;
-  groupSlug: GroupSlug;
-  categorySlug: string;
-  price: number;
-  compareAtPrice: number;
-  cost: number;
-  sku: string;
-  stock: number;
-  sizes: string[];
-  images: string[];
-  fabric: string;
-  colorFamily: string;
-  status: string;
-  featured: boolean;
-  vendor: string;
-};
-
 function slugify(value: string): string {
   return value
     .toLowerCase()
@@ -273,24 +316,46 @@ export const SEED_PRODUCTS: SeedProduct[] = (() => {
   const out: SeedProduct[] = [];
   let index = 0;
   (Object.keys(SEED) as GroupSlug[]).forEach((group) => {
-    Object.entries(SEED[group]).forEach(([categorySlug, drafts]) => {
+    Object.entries(SEED[group]).forEach(([key, drafts]) => {
       drafts.forEach((draft, i) => {
         const [title, subtitle, price, compareAt, fabric, color, a, b] = draft;
         index += 1;
+
+        let categorySlug = key;
+        let subcategorySlug = "";
+
+        if (group === "women" && key.includes("-")) {
+          const parts = key.split("-");
+          if (["stitched", "unstitched", "bottoms", "3-pc-sets", "1-pc", "separate-pieces"].includes(parts[0])) {
+            categorySlug = parts[0];
+            subcategorySlug = key;
+          } else if (key.startsWith("3-pc-sets-") || key.startsWith("1-pc-")) {
+            if (key.startsWith("3-pc-sets-")) {
+              categorySlug = "3-pc-sets";
+              subcategorySlug = key;
+            } else {
+              categorySlug = "1-pc";
+              subcategorySlug = key;
+            }
+          }
+        }
+
         const sizes = BABY_CATEGORIES.includes(categorySlug)
           ? BABY_SIZES
           : SIZES_BY_GROUP[group];
+
         out.push({
           slug: `${slugify(title)}-${group === "bed" || group === "bath" ? "hm" : group}-${1000 + index}`,
           title,
           subtitle,
           description: `${title} — ${subtitle.toLowerCase()}. Crafted from ${fabric.toLowerCase()} in a ${color.toLowerCase()} finish, this Ridexd ${
             group === "women"
-              ? "shalwar kameez"
+              ? "suit piece"
               : categorySlug.replace(/-/g, " ")
-          } piece is quality checked in our Lahore studio and shipped ready to use. Care: machine wash cold with like colours, do not bleach, warm iron on reverse. Free delivery on orders above Rs 5,000 and 14 day easy exchange on all full price items.`,
+          } is quality checked in our Lahore studio and shipped ready to use. Care: machine wash cold with like colours, do not bleach, warm iron on reverse. Free delivery on orders above Rs 5,000 and 14 day easy exchange on all full price items.`,
           groupSlug: group,
           categorySlug,
+          subcategorySlug,
           price,
           compareAtPrice: compareAt,
           cost: Math.round(price * 0.55),

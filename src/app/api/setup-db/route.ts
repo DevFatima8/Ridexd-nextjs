@@ -9,6 +9,7 @@ export async function GET() {
       CREATE TABLE IF NOT EXISTS \`categories\` (
         \`id\`          INT AUTO_INCREMENT PRIMARY KEY,
         \`group_slug\`  VARCHAR(40)  NOT NULL,
+        \`parent_slug\` VARCHAR(80)  NOT NULL DEFAULT '',
         \`slug\`        VARCHAR(80)  NOT NULL,
         \`name\`        VARCHAR(120) NOT NULL,
         \`tagline\`     VARCHAR(200) NOT NULL DEFAULT '',
@@ -21,6 +22,12 @@ export async function GET() {
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
     `);
 
+    try {
+      await pool.query(`ALTER TABLE \`categories\` ADD COLUMN \`parent_slug\` VARCHAR(80) NOT NULL DEFAULT ''`);
+    } catch {
+      // Ignored if column already exists
+    }
+
     // 2. Create products table
     await pool.query(`
       CREATE TABLE IF NOT EXISTS \`products\` (
@@ -31,6 +38,7 @@ export async function GET() {
         \`description\`      TEXT         NULL,
         \`group_slug\`       VARCHAR(40)  NOT NULL,
         \`category_slug\`    VARCHAR(80)  NOT NULL,
+        \`subcategory_slug\` VARCHAR(80)  NOT NULL DEFAULT '',
         \`price\`            INT          NOT NULL DEFAULT 0,
         \`compare_at_price\` INT          NOT NULL DEFAULT 0,
         \`cost\`             INT          NOT NULL DEFAULT 0,
@@ -51,6 +59,12 @@ export async function GET() {
         KEY \`idx_products_status\` (\`status\`)
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
     `);
+
+    try {
+      await pool.query(`ALTER TABLE \`products\` ADD COLUMN \`subcategory_slug\` VARCHAR(80) NOT NULL DEFAULT ''`);
+    } catch {
+      // Ignored if column already exists
+    }
 
     // 3. Create orders table
     await pool.query(`

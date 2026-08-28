@@ -10,6 +10,7 @@ SET FOREIGN_KEY_CHECKS = 0;
 CREATE TABLE IF NOT EXISTS `categories` (
   `id`          INT AUTO_INCREMENT PRIMARY KEY,
   `group_slug`  VARCHAR(40)  NOT NULL,
+  `parent_slug` VARCHAR(80)  NOT NULL DEFAULT '',
   `slug`        VARCHAR(80)  NOT NULL,
   `name`        VARCHAR(120) NOT NULL,
   `tagline`     VARCHAR(200) NOT NULL DEFAULT '',
@@ -18,7 +19,8 @@ CREATE TABLE IF NOT EXISTS `categories` (
   `sort_order`  INT          NOT NULL DEFAULT 0,
   `created_at`  TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
   UNIQUE KEY `uniq_categories_group_slug` (`group_slug`, `slug`),
-  KEY `idx_categories_group` (`group_slug`)
+  KEY `idx_categories_group` (`group_slug`),
+  KEY `idx_categories_parent` (`parent_slug`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS `products` (
@@ -29,6 +31,7 @@ CREATE TABLE IF NOT EXISTS `products` (
   `description`      TEXT         NULL,
   `group_slug`       VARCHAR(40)  NOT NULL,
   `category_slug`    VARCHAR(80)  NOT NULL,
+  `subcategory_slug` VARCHAR(80)  NOT NULL DEFAULT '',
   `price`            INT          NOT NULL DEFAULT 0,
   `compare_at_price` INT          NOT NULL DEFAULT 0,
   `cost`             INT          NOT NULL DEFAULT 0,
@@ -46,6 +49,7 @@ CREATE TABLE IF NOT EXISTS `products` (
   `updated_at`       TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   KEY `idx_products_group` (`group_slug`),
   KEY `idx_products_category` (`category_slug`),
+  KEY `idx_products_subcategory` (`subcategory_slug`),
   KEY `idx_products_status` (`status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 

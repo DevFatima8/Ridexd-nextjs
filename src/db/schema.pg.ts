@@ -23,6 +23,7 @@ export const categories = pgTable(
   {
     id: serial("id").primaryKey(),
     groupSlug: varchar("group_slug", { length: 40 }).notNull(),
+    parentSlug: varchar("parent_slug", { length: 80 }).notNull().default(""),
     slug: varchar("slug", { length: 80 }).notNull(),
     name: varchar("name", { length: 120 }).notNull(),
     tagline: varchar("tagline", { length: 200 }).notNull().default(""),
@@ -42,6 +43,7 @@ export const products = pgTable("products", {
   description: text("description").notNull().default(""),
   groupSlug: varchar("group_slug", { length: 40 }).notNull(),
   categorySlug: varchar("category_slug", { length: 80 }).notNull(),
+  subcategorySlug: varchar("subcategory_slug", { length: 80 }).notNull().default(""),
   price: integer("price").notNull().default(0),
   compareAtPrice: integer("compare_at_price").notNull().default(0),
   cost: integer("cost").notNull().default(0),

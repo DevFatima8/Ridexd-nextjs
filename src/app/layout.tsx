@@ -10,6 +10,14 @@ export const metadata: Metadata = {
   },
   description:
     "Shop Ridexd.com for women stitched, unstitched & luxury pret, men stitched, unstitched & elegant tailoring, kids wear, plus premium bed and bath textiles. Cash on delivery across Pakistan.",
+  icons: {
+    icon: [
+      { url: "/icon.png", type: "image/png" },
+      { url: "/logo.png", type: "image/png" },
+    ],
+    shortcut: "/icon.png",
+    apple: "/logo.png",
+  },
   keywords: [
     "Ridexd",
     "online shopping Pakistan",

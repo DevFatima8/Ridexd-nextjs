@@ -20,7 +20,7 @@ export default function AdminLoginPage() {
     });
     setLoading(false);
     if (!response.ok) {
-      setError("Incorrect password. Try the demo password: Admin@123");
+      setError("Incorrect password.");
       return;
     }
     router.push("/admin");
@@ -63,11 +63,6 @@ export default function AdminLoginPage() {
             {loading ? "Signing in…" : "Log in"}
           </button>
         </form>
-
-        <p className="mt-6 text-[11px] leading-relaxed text-[#8c9196]">
-          Demo password <strong>Admin@123</strong>. Set <code>ADMIN_PASSWORD</code> in your env file
-          before going live on Hostinger.
-        </p>
       </div>
     </div>
   );

@@ -12,21 +12,22 @@ export type GroupMeta = {
 export type CategoryMeta = {
   group: GroupSlug;
   slug: string;
+  parentSlug?: string;
   name: string;
   tagline: string;
   image: string;
 };
 
 /**
- * 5 top level departments, each with exactly 5 categories.
+  * Top level departments and curated category architecture.
  */
 export const GROUPS: GroupMeta[] = [
   {
     slug: "women",
     name: "Women",
-    tagline: "Stitched · Unstitched · Luxury",
+    tagline: "Stitched · Unstitched · Bottoms · 3 PC Sets · 1 PC · Separate Pieces",
     description:
-      "Signature womenswear built on fine embroidery, breathable weaves and a silhouette for every occasion — from everyday stitched suits to couture-grade luxury pret.",
+      "Signature womenswear built on fine embroidery, breathable weaves and a silhouette for every occasion — from everyday stitched and unstitched suits to bottoms and separate pieces.",
     image:
       "https://images.pexels.com/photos/36325842/pexels-photo-36325842.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1200&w=800",
     accent: "from-rose-100 to-amber-50",
@@ -74,46 +75,228 @@ export const GROUPS: GroupMeta[] = [
 ];
 
 export const CATEGORIES: CategoryMeta[] = [
-  // ---------- Women ----------
+  // ---------- Women Main Categories ----------
   {
     group: "women",
     slug: "stitched",
     name: "Stitched",
-    tagline: "Ready-to-wear 2 & 3 piece suits",
+    tagline: "Ready-to-wear 1 PC, 2 PC, 3 PC & Luxury suits",
     image:
       "https://images.pexels.com/photos/29413594/pexels-photo-29413594.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1200&w=800",
   },
   {
     group: "women",
     slug: "unstitched",
-    name: "Unstitched Shalwar Kameez",
-    tagline: "3 piece shalwar kameez fabric rolls",
+    name: "Unstitched",
+    tagline: "1 PC, 2 PC, 3 PC & Luxury unstitched fabric",
     image:
       "https://images.pexels.com/photos/38771059/pexels-photo-38771059.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1200&w=800",
   },
   {
     group: "women",
-    slug: "luxury-pret",
-    name: "Luxury Pret",
-    tagline: "Hand-embellished couture edits",
-    image:
-      "https://images.pexels.com/photos/28390544/pexels-photo-28390544.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1200&w=800",
-  },
-  {
-    group: "women",
-    slug: "kurta-sets",
-    name: "Kurta Sets",
-    tagline: "Everyday kurtas with palazzo & pants",
+    slug: "bottoms",
+    name: "Bottoms",
+    tagline: "Trouser, Pants & Tights",
     image:
       "https://images.pexels.com/photos/33210512/pexels-photo-33210512.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1200&w=800",
   },
   {
     group: "women",
-    slug: "shawls-dupattas",
-    name: "Shawls & Dupattas",
-    tagline: "Pashmina, jacquard & chiffon",
+    slug: "3-pc-sets",
+    name: "3 PC Sets",
+    tagline: "Shirt, Dupatta & Trouser sets",
+    image:
+      "https://images.pexels.com/photos/29413562/pexels-photo-29413562.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1200&w=800",
+  },
+  {
+    group: "women",
+    slug: "1-pc",
+    name: "1 PC",
+    tagline: "Kurti & Kurti Sets",
+    image:
+      "https://images.pexels.com/photos/28390544/pexels-photo-28390544.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1200&w=800",
+  },
+  {
+    group: "women",
+    slug: "separate-pieces",
+    name: "Separate Pieces",
+    tagline: "Kameez / Shirt & Shalwar / Trouser",
     image:
       "https://images.pexels.com/photos/29413658/pexels-photo-29413658.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1200&w=800",
+  },
+
+  // ---------- Women Subcategories: 1. Stitched ----------
+  {
+    group: "women",
+    slug: "stitched-1-pc",
+    parentSlug: "stitched",
+    name: "1 PC",
+    tagline: "Single stitched shirt / kurti",
+    image:
+      "https://images.pexels.com/photos/29413594/pexels-photo-29413594.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1200&w=800",
+  },
+  {
+    group: "women",
+    slug: "stitched-2-pc",
+    parentSlug: "stitched",
+    name: "2 PC",
+    tagline: "Stitched shirt with dupatta or trouser",
+    image:
+      "https://images.pexels.com/photos/29413594/pexels-photo-29413594.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1200&w=800",
+  },
+  {
+    group: "women",
+    slug: "stitched-3-pc",
+    parentSlug: "stitched",
+    name: "3 PC",
+    tagline: "Complete 3 piece stitched suit",
+    image:
+      "https://images.pexels.com/photos/29413594/pexels-photo-29413594.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1200&w=800",
+  },
+  {
+    group: "women",
+    slug: "stitched-luxury",
+    parentSlug: "stitched",
+    name: "Luxury",
+    tagline: "Luxury pret & couture stitched suit",
+    image:
+      "https://images.pexels.com/photos/28390544/pexels-photo-28390544.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1200&w=800",
+  },
+
+  // ---------- Women Subcategories: 2. Unstitched ----------
+  {
+    group: "women",
+    slug: "unstitched-1-pc",
+    parentSlug: "unstitched",
+    name: "1 PC",
+    tagline: "Single unstitched shirt fabric",
+    image:
+      "https://images.pexels.com/photos/38771059/pexels-photo-38771059.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1200&w=800",
+  },
+  {
+    group: "women",
+    slug: "unstitched-2-pc",
+    parentSlug: "unstitched",
+    name: "2 PC",
+    tagline: "Unstitched shirt & dupatta / trouser",
+    image:
+      "https://images.pexels.com/photos/38771059/pexels-photo-38771059.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1200&w=800",
+  },
+  {
+    group: "women",
+    slug: "unstitched-3-pc",
+    parentSlug: "unstitched",
+    name: "3 PC",
+    tagline: "Full 3 piece unstitched suit fabric",
+    image:
+      "https://images.pexels.com/photos/38771059/pexels-photo-38771059.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1200&w=800",
+  },
+  {
+    group: "women",
+    slug: "unstitched-luxury",
+    parentSlug: "unstitched",
+    name: "Luxury",
+    tagline: "Heavy embroidered luxury unstitched",
+    image:
+      "https://images.pexels.com/photos/38771059/pexels-photo-38771059.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1200&w=800",
+  },
+
+  // ---------- Women Subcategories: 3. Bottoms ----------
+  {
+    group: "women",
+    slug: "bottoms-trouser",
+    parentSlug: "bottoms",
+    name: "Trouser",
+    tagline: "Stitched cotton & cambric trousers",
+    image:
+      "https://images.pexels.com/photos/33210512/pexels-photo-33210512.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1200&w=800",
+  },
+  {
+    group: "women",
+    slug: "bottoms-pants",
+    parentSlug: "bottoms",
+    name: "Pants",
+    tagline: "Straight leg & cigarette pants",
+    image:
+      "https://images.pexels.com/photos/33210512/pexels-photo-33210512.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1200&w=800",
+  },
+  {
+    group: "women",
+    slug: "bottoms-tights",
+    parentSlug: "bottoms",
+    name: "Tights",
+    tagline: "Stretch jersey & cotton tights",
+    image:
+      "https://images.pexels.com/photos/33210512/pexels-photo-33210512.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1200&w=800",
+  },
+
+  // ---------- Women Subcategories: 4. 3 PC Sets ----------
+  {
+    group: "women",
+    slug: "3-pc-sets-shirt",
+    parentSlug: "3-pc-sets",
+    name: "Shirt",
+    tagline: "3 PC matching embroidered shirt",
+    image:
+      "https://images.pexels.com/photos/29413562/pexels-photo-29413562.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1200&w=800",
+  },
+  {
+    group: "women",
+    slug: "3-pc-sets-dupatta",
+    parentSlug: "3-pc-sets",
+    name: "Dupatta",
+    tagline: "3 PC designer dupatta",
+    image:
+      "https://images.pexels.com/photos/29413658/pexels-photo-29413658.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1200&w=800",
+  },
+  {
+    group: "women",
+    slug: "3-pc-sets-trouser",
+    parentSlug: "3-pc-sets",
+    name: "Trouser",
+    tagline: "3 PC matching bottom / trouser",
+    image:
+      "https://images.pexels.com/photos/33210512/pexels-photo-33210512.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1200&w=800",
+  },
+
+  // ---------- Women Subcategories: 5. 1 PC ----------
+  {
+    group: "women",
+    slug: "1-pc-kurti",
+    parentSlug: "1-pc",
+    name: "Kurti",
+    tagline: "Single printed & embroidered kurti",
+    image:
+      "https://images.pexels.com/photos/28390544/pexels-photo-28390544.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1200&w=800",
+  },
+  {
+    group: "women",
+    slug: "1-pc-kurti-sets",
+    parentSlug: "1-pc",
+    name: "Kurti Sets",
+    tagline: "Kurti set with matching scarf",
+    image:
+      "https://images.pexels.com/photos/28390544/pexels-photo-28390544.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1200&w=800",
+  },
+
+  // ---------- Women Subcategories: 6. Separate Pieces ----------
+  {
+    group: "women",
+    slug: "separate-kameez-shirt",
+    parentSlug: "separate-pieces",
+    name: "Kameez / Shirt",
+    tagline: "Separate stitched or unstitched shirt",
+    image:
+      "https://images.pexels.com/photos/29413658/pexels-photo-29413658.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1200&w=800",
+  },
+  {
+    group: "women",
+    slug: "separate-shalwar-trouser",
+    parentSlug: "separate-pieces",
+    name: "Shalwar / Trouser",
+    tagline: "Separate tulip shalwar & trouser",
+    image:
+      "https://images.pexels.com/photos/33210512/pexels-photo-33210512.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1200&w=800",
   },
 
   // ---------- Men ----------
@@ -289,11 +472,23 @@ export const GROUP_MAP: Record<string, GroupMeta> = Object.fromEntries(
   GROUPS.map((g) => [g.slug, g]),
 );
 
-export function categoriesForGroup(group: string): CategoryMeta[] {
-  return CATEGORIES.filter((c) => c.group === group);
+export function categoriesForGroup(group: string, includeSubcategories = false): CategoryMeta[] {
+  return CATEGORIES.filter(
+    (c) => c.group === group && (includeSubcategories || !c.parentSlug),
+  );
 }
 
-export function categoryLabel(group: string, slug: string): string {
+export function subcategoriesForCategory(group: string, parentSlug: string): CategoryMeta[] {
+  return CATEGORIES.filter((c) => c.group === group && c.parentSlug === parentSlug);
+}
+
+export function categoryLabel(group: string, slug: string, subcategorySlug?: string): string {
+  if (subcategorySlug) {
+    const sub = CATEGORIES.find(
+      (c) => c.group === group && (c.slug === subcategorySlug || c.slug === `${slug}-${subcategorySlug}`),
+    );
+    if (sub) return sub.name;
+  }
   const cat = CATEGORIES.find((c) => c.group === group && c.slug === slug);
   return cat ? cat.name : slug;
 }
