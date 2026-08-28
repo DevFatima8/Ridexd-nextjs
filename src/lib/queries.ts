@@ -6,7 +6,31 @@ import type { AnyColumn } from "drizzle-orm";
 import { CATEGORIES } from "./catalog";
 import { SEED_PRODUCTS } from "./seed-data";
 
-const FALLBACK_PRODUCTS: ProductRow[] = [];
+const FALLBACK_PRODUCTS: ProductRow[] = SEED_PRODUCTS.map((p, i) => ({
+  id: i + 1,
+  slug: p.slug,
+  title: p.title,
+  subtitle: p.subtitle,
+  description: p.description,
+  groupSlug: p.groupSlug,
+  categorySlug: p.categorySlug,
+  subcategorySlug: p.subcategorySlug ?? "",
+  price: p.price,
+  compareAtPrice: p.compareAtPrice,
+  cost: p.cost,
+  sku: p.sku,
+  barcode: "",
+  stock: p.stock,
+  sizes: p.sizes,
+  images: p.images,
+  fabric: p.fabric,
+  colorFamily: p.colorFamily,
+  status: p.status,
+  featured: p.featured,
+  vendor: p.vendor,
+  createdAt: new Date(),
+  updatedAt: new Date(),
+}));
 
 function getFallbackProducts(filters: ProductFilters = {}) {
   const page = Math.max(1, filters.page ?? 1);
@@ -21,7 +45,15 @@ function getFallbackProducts(filters: ProductFilters = {}) {
     items = items.filter((p) => p.groupSlug === filters.group);
   }
   if (filters.category && filters.category !== "all") {
-    items = items.filter((p) => p.categorySlug === filters.category);
+    items = items.filter(
+      (p) =>
+        p.categorySlug === filters.category ||
+        p.subcategorySlug === filters.category ||
+        p.subcategorySlug.startsWith(`${filters.category}-`),
+    );
+  }
+  if (filters.subcategory && filters.subcategory !== "all") {
+    items = items.filter((p) => p.subcategorySlug === filters.subcategory);
   }
   if (filters.featured) {
     items = items.filter((p) => p.featured);
@@ -79,12 +111,22 @@ function getFallbackProducts(filters: ProductFilters = {}) {
 
 function getFallbackCategories(group?: string): CategoryWithCount[] {
   return CATEGORIES.filter((c) => !group || c.group === group).map((c, i) => {
-    const count = FALLBACK_PRODUCTS.filter(
-      (p) => p.groupSlug === c.group && p.categorySlug === c.slug,
-    ).length;
+    let count = 0;
+    if (c.parentSlug) {
+      count = FALLBACK_PRODUCTS.filter(
+        (p) => p.groupSlug === c.group && p.subcategorySlug === c.slug,
+      ).length;
+    } else {
+      count = FALLBACK_PRODUCTS.filter(
+        (p) =>
+          p.groupSlug === c.group &&
+          (p.categorySlug === c.slug || p.subcategorySlug.startsWith(`${c.slug}-`)),
+      ).length;
+    }
     return {
       id: i + 1,
       groupSlug: c.group,
+      parentSlug: c.parentSlug ?? "",
       categorySlug: c.slug,
       name: c.name,
       tagline: c.tagline,
@@ -105,22 +147,39 @@ function getFallbackGroupCounts(): Record<string, number> {
 let seedPromise: Promise<void> | null = null;
 let isSeeded = false;
 
+async function ensureSchemaColumns(): Promise<void> {
+  try {
+    await db.execute(sql`ALTER TABLE categories ADD COLUMN parent_slug VARCHAR(80) NOT NULL DEFAULT ''`);
+  } catch {
+    // Ignored if column exists
+  }
+  try {
+    await db.execute(sql`ALTER TABLE products ADD COLUMN subcategory_slug VARCHAR(80) NOT NULL DEFAULT ''`);
+  } catch {
+    // Ignored if column exists
+  }
+}
+
 async function seedOnce(): Promise<void> {
+  await ensureSchemaColumns();
   const [{ value: categoryCount }] = await db.select({ value: count() }).from(categories);
-  if (Number(categoryCount) === 0) {
-    await db
-      .insert(categories)
-      .values(
-        CATEGORIES.map((c, i) => ({
+  if (Number(categoryCount) < CATEGORIES.length) {
+    for (const [i, c] of CATEGORIES.entries()) {
+      try {
+        await db.insert(categories).values({
           groupSlug: c.group,
+          parentSlug: c.parentSlug ?? "",
           slug: c.slug,
           name: c.name,
           tagline: c.tagline,
           description: `${c.name} — ${c.tagline}. Explore the full Ridexd ${c.group} edit.`,
           imageUrl: c.image,
           sortOrder: i,
-        })),
-      );
+        });
+      } catch {
+        // Ignored if unique constraint hit
+      }
+    }
   }
 
   isSeeded = true;
@@ -144,6 +203,7 @@ export async function ensureSeeded(): Promise<void> {
 export type ProductFilters = {
   group?: string;
   category?: string;
+  subcategory?: string;
   q?: string;
   sort?: string;
   minPrice?: number;
@@ -192,7 +252,17 @@ export async function listProducts(filters: ProductFilters = {}): Promise<{
       conditions.push(eq(products.groupSlug, filters.group));
     }
     if (filters.category && filters.category !== "all") {
-      conditions.push(eq(products.categorySlug, filters.category));
+      const prefixPattern = `${filters.category}-%`;
+      conditions.push(
+        or(
+          eq(products.categorySlug, filters.category),
+          eq(products.subcategorySlug, filters.category),
+          sql`${products.subcategorySlug} LIKE ${prefixPattern}`,
+        )!,
+      );
+    }
+    if (filters.subcategory && filters.subcategory !== "all") {
+      conditions.push(eq(products.subcategorySlug, filters.subcategory));
     }
     if (filters.featured) conditions.push(eq(products.featured, true));
     if (typeof filters.minPrice === "number" && !Number.isNaN(filters.minPrice)) {
@@ -325,6 +395,7 @@ export async function getGroupCounts(): Promise<Record<string, number>> {
 export type CategoryWithCount = {
   id: number;
   groupSlug: string;
+  parentSlug?: string;
   categorySlug: string;
   name: string;
   tagline: string;
@@ -340,51 +411,74 @@ export type CategoryWithCount = {
 export async function getCategoryOverview(group?: string): Promise<CategoryWithCount[]> {
   try {
     await ensureSeeded();
-    const rows = await db
+    const catRows = await db
       .select({
         id: categories.id,
         groupSlug: categories.groupSlug,
+        parentSlug: categories.parentSlug,
         categorySlug: categories.slug,
         name: categories.name,
         tagline: categories.tagline,
         image: categories.imageUrl,
-        productCount: count(products.id),
       })
       .from(categories)
-      .leftJoin(
-        products,
-        and(eq(products.groupSlug, categories.groupSlug), eq(products.categorySlug, categories.slug)),
-      )
-      .groupBy(
-        categories.id,
-        categories.groupSlug,
-        categories.slug,
-        categories.name,
-        categories.tagline,
-        categories.imageUrl,
-        categories.sortOrder,
-      )
       .orderBy(asc(categories.sortOrder), asc(categories.id));
 
-    return rows
-      .filter((row: { groupSlug: string }) => !group || row.groupSlug === group)
-      .map((row: { id: number; groupSlug: string; categorySlug: string; name: string; tagline: string; image: string; productCount: number | string | null }) => ({
-        id: row.id,
-        groupSlug: row.groupSlug,
-        categorySlug: row.categorySlug,
-        name: row.name,
-        tagline: row.tagline,
-        image: row.image,
-        productCount: Number(row.productCount ?? 0),
-      }));
+    const prodRows = await db
+      .select({
+        groupSlug: products.groupSlug,
+        categorySlug: products.categorySlug,
+        subcategorySlug: products.subcategorySlug,
+      })
+      .from(products);
+
+    return catRows
+      .filter((cat: { groupSlug: string }) => !group || cat.groupSlug === group)
+      .map(
+        (cat: {
+          id: number;
+          groupSlug: string;
+          parentSlug: string | null;
+          categorySlug: string;
+          name: string;
+          tagline: string;
+          image: string;
+        }) => {
+          let count = 0;
+          if (cat.parentSlug) {
+            count = prodRows.filter(
+              (p: { groupSlug: string; categorySlug: string; subcategorySlug: string }) =>
+                p.groupSlug === cat.groupSlug &&
+                (p.subcategorySlug === cat.categorySlug || p.categorySlug === cat.categorySlug),
+            ).length;
+          } else {
+            count = prodRows.filter(
+              (p: { groupSlug: string; categorySlug: string; subcategorySlug: string }) =>
+                p.groupSlug === cat.groupSlug &&
+                (p.categorySlug === cat.categorySlug || p.subcategorySlug.startsWith(`${cat.categorySlug}-`)),
+            ).length;
+          }
+          return {
+            id: cat.id,
+            groupSlug: cat.groupSlug,
+            parentSlug: cat.parentSlug || "",
+            categorySlug: cat.categorySlug,
+            name: cat.name,
+            tagline: cat.tagline,
+            image: cat.image,
+            productCount: count,
+          };
+        },
+      );
   } catch (error) {
-    console.warn("[ridexd] getCategoryOverview database query failed, using fallback");
+    console.warn("[ridexd] getCategoryOverview database query failed, using fallback", error);
     return getFallbackCategories(group);
   }
 }
 
 export type CategoryInput = {
   groupSlug: string;
+  parentSlug?: string;
   name: string;
   tagline?: string;
   description?: string;
@@ -417,6 +511,7 @@ export async function createCategory(input: CategoryInput) {
 
   await db.insert(categories).values({
     groupSlug,
+    parentSlug: input.parentSlug?.trim() ?? "",
     slug,
     name,
     tagline: input.tagline?.trim() ?? "",
@@ -440,6 +535,7 @@ export async function updateCategory(id: number, input: Partial<CategoryInput>) 
   if (input.description !== undefined) patch.description = String(input.description);
   if (input.imageUrl !== undefined) patch.imageUrl = String(input.imageUrl);
   if (input.groupSlug !== undefined) patch.groupSlug = String(input.groupSlug);
+  if (input.parentSlug !== undefined) patch.parentSlug = String(input.parentSlug).trim();
 
   await db.update(categories).set(patch).where(eq(categories.id, id));
   const rows = await db.select().from(categories).where(eq(categories.id, id)).limit(1);

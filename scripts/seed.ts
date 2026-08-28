@@ -23,6 +23,7 @@ async function seed() {
       if (!existing.length) {
         await db.insert(categories).values({
           groupSlug: c.group,
+          parentSlug: c.parentSlug ?? "",
           slug: c.slug,
           name: c.name,
           tagline: c.tagline,

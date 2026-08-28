@@ -29,6 +29,7 @@ async function run() {
         CREATE TABLE IF NOT EXISTS categories (
           id SERIAL PRIMARY KEY,
           group_slug VARCHAR(40) NOT NULL,
+          parent_slug VARCHAR(80) NOT NULL DEFAULT '',
           slug VARCHAR(80) NOT NULL,
           name VARCHAR(120) NOT NULL,
           tagline VARCHAR(200) NOT NULL DEFAULT '',
@@ -47,6 +48,7 @@ async function run() {
           description TEXT NOT NULL DEFAULT '',
           group_slug VARCHAR(40) NOT NULL,
           category_slug VARCHAR(80) NOT NULL,
+          subcategory_slug VARCHAR(80) NOT NULL DEFAULT '',
           price INT NOT NULL DEFAULT 0,
           compare_at_price INT NOT NULL DEFAULT 0,
           cost INT NOT NULL DEFAULT 0,

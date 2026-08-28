@@ -14,7 +14,7 @@ export function CategoryManager({ categories }: { categories: CategoryWithCount[
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
-  const [draft, setDraft] = useState({ name: "", tagline: "", imageUrl: "", groupSlug: "women" });
+  const [draft, setDraft] = useState({ name: "", tagline: "", imageUrl: "", groupSlug: "women", parentSlug: "" });
   const catFileInputRef = useRef<HTMLInputElement>(null);
 
   function handleCatFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
@@ -31,7 +31,7 @@ export function CategoryManager({ categories }: { categories: CategoryWithCount[
   }
 
   function reset() {
-    setDraft({ name: "", tagline: "", imageUrl: "", groupSlug: "women" });
+    setDraft({ name: "", tagline: "", imageUrl: "", groupSlug: "women", parentSlug: "" });
     setEditingId(null);
     setError("");
   }
@@ -106,7 +106,7 @@ export function CategoryManager({ categories }: { categories: CategoryWithCount[
             Department
             <select
               value={draft.groupSlug}
-              onChange={(e) => setDraft((d) => ({ ...d, groupSlug: e.target.value }))}
+              onChange={(e) => setDraft((d) => ({ ...d, groupSlug: e.target.value, parentSlug: "" }))}
               className="mt-1.5 w-full rounded border border-[#c9cccf] px-3 py-2 text-[13px]"
             >
               {GROUPS.map((g) => (
@@ -114,6 +114,23 @@ export function CategoryManager({ categories }: { categories: CategoryWithCount[
                   {g.name}
                 </option>
               ))}
+            </select>
+          </label>
+          <label className="block text-[12px] text-[#6d7175]">
+            Parent Category (Optional)
+            <select
+              value={draft.parentSlug}
+              onChange={(e) => setDraft((d) => ({ ...d, parentSlug: e.target.value }))}
+              className="mt-1.5 w-full rounded border border-[#c9cccf] px-3 py-2 text-[13px]"
+            >
+              <option value="">None (Top-Level Category)</option>
+              {categories
+                .filter((c) => c.groupSlug === draft.groupSlug && !c.parentSlug)
+                .map((c) => (
+                  <option key={c.categorySlug} value={c.categorySlug}>
+                    {c.name}
+                  </option>
+                ))}
             </select>
           </label>
           <label className="block text-[12px] text-[#6d7175]">
@@ -134,7 +151,7 @@ export function CategoryManager({ categories }: { categories: CategoryWithCount[
               className="mt-1.5 w-full rounded border border-[#c9cccf] px-3 py-2 text-[13px] outline-none focus:border-[#00a0ac]"
             />
           </label>
-          <div className="block text-[12px] text-[#6d7175]">
+          <div className="block text-[12px] text-[#6d7175] sm:col-span-2">
             Image (Upload or URL)
             <input
               ref={catFileInputRef}
@@ -189,6 +206,7 @@ export function CategoryManager({ categories }: { categories: CategoryWithCount[
             <tr>
               <th className="px-4 py-3">Category</th>
               <th className="px-3 py-3">Department</th>
+              <th className="px-3 py-3">Parent</th>
               <th className="px-3 py-3">Slug</th>
               <th className="px-3 py-3">Products</th>
               <th className="px-4 py-3 text-right">Actions</th>
@@ -212,12 +230,22 @@ export function CategoryManager({ categories }: { categories: CategoryWithCount[
                       </div>
                     )}
                     <div>
-                      <p className="font-medium">{cat.name}</p>
+                      <p className="font-medium flex items-center gap-2">
+                        {cat.name}
+                        {cat.parentSlug && (
+                          <span className="rounded bg-[#e6f7f8] px-1.5 py-0.5 text-[10px] text-[#00a0ac]">
+                            Subcategory
+                          </span>
+                        )}
+                      </p>
                       <p className="text-[11px] text-[#8c9196]">{cat.tagline}</p>
                     </div>
                   </div>
                 </td>
                 <td className="px-3 py-3 capitalize">{cat.groupSlug}</td>
+                <td className="px-3 py-3 text-[#6d7175]">
+                  {cat.parentSlug || <span className="text-[#8c9196]">—</span>}
+                </td>
                 <td className="px-3 py-3 text-[#6d7175]">{cat.categorySlug}</td>
                 <td className="px-3 py-3">{cat.productCount}</td>
                 <td className="px-4 py-3 text-right">
@@ -237,6 +265,7 @@ export function CategoryManager({ categories }: { categories: CategoryWithCount[
                           tagline: cat.tagline,
                           imageUrl: cat.image,
                           groupSlug: cat.groupSlug,
+                          parentSlug: cat.parentSlug ?? "",
                         });
                         setOpen(true);
                       }}

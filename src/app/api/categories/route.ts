@@ -18,6 +18,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const created = await createCategory({
       groupSlug: String(body.groupSlug ?? "women"),
+      parentSlug: body.parentSlug ? String(body.parentSlug) : "",
       name: String(body.name ?? ""),
       tagline: body.tagline ? String(body.tagline) : "",
       description: body.description ? String(body.description) : "",

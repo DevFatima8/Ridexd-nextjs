@@ -13,7 +13,7 @@ const SIZE_PRESETS = [
   "Single", "Queen", "King", "Standard",
 ];
 
-type CategoryOption = { groupSlug: string; categorySlug: string; name: string };
+type CategoryOption = { groupSlug: string; parentSlug?: string; categorySlug: string; name: string };
 
 export function ProductForm({
   product,
@@ -32,6 +32,7 @@ export function ProductForm({
     description: product?.description ?? "",
     groupSlug: product?.groupSlug ?? "women",
     categorySlug: product?.categorySlug ?? categories[0]?.categorySlug ?? "",
+    subcategorySlug: product?.subcategorySlug ?? "",
     price: product?.price ?? 0,
     compareAtPrice: product?.compareAtPrice ?? 0,
     cost: product?.cost ?? 0,
@@ -95,7 +96,12 @@ export function ProductForm({
     if (files.length) handleFiles(files);
   }
 
-  const groupCategories = categories.filter((c) => c.groupSlug === form.groupSlug);
+  const groupCategories = categories.filter(
+    (c) => c.groupSlug === form.groupSlug && !c.parentSlug,
+  );
+  const groupSubcategories = categories.filter(
+    (c) => c.groupSlug === form.groupSlug && c.parentSlug === form.categorySlug,
+  );
   const fallbackCategory =
     groupCategories[0]?.categorySlug ?? categories[0]?.categorySlug ?? "stitched";
 
@@ -386,10 +392,14 @@ export function ProductForm({
               value={form.groupSlug}
               onChange={(e) => {
                 const group = e.target.value;
+                const groupCats = categories.filter((c) => c.groupSlug === group && !c.parentSlug);
+                const firstCat = groupCats[0]?.categorySlug ?? "";
+                const subs = categories.filter((c) => c.groupSlug === group && c.parentSlug === firstCat);
                 setForm((prev) => ({
                   ...prev,
                   groupSlug: group,
-                  categorySlug: categories.filter((c) => c.groupSlug === group)[0]?.categorySlug ?? "",
+                  categorySlug: firstCat,
+                  subcategorySlug: subs[0]?.categorySlug ?? "",
                 }));
               }}
               className="mt-1.5 w-full rounded border border-[#c9cccf] px-3 py-2 text-[13px]"
@@ -405,7 +415,17 @@ export function ProductForm({
             Category
             <select
               value={form.categorySlug}
-              onChange={(e) => update("categorySlug", e.target.value)}
+              onChange={(e) => {
+                const cat = e.target.value;
+                const subs = categories.filter(
+                  (c) => c.groupSlug === form.groupSlug && c.parentSlug === cat,
+                );
+                setForm((prev) => ({
+                  ...prev,
+                  categorySlug: cat,
+                  subcategorySlug: subs[0]?.categorySlug ?? "",
+                }));
+              }}
               className="mt-1.5 w-full rounded border border-[#c9cccf] px-3 py-2 text-[13px]"
             >
               {(groupCategories.length ? groupCategories : categories).map((c) => (
@@ -415,6 +435,23 @@ export function ProductForm({
               ))}
             </select>
           </label>
+          {groupSubcategories.length > 0 && (
+            <label className="mt-3 block text-[12px] text-[#6d7175]">
+              Subcategory
+              <select
+                value={form.subcategorySlug}
+                onChange={(e) => update("subcategorySlug", e.target.value)}
+                className="mt-1.5 w-full rounded border border-[#c9cccf] px-3 py-2 text-[13px]"
+              >
+                <option value="">None / All subcategories</option>
+                {groupSubcategories.map((sc) => (
+                  <option key={`${sc.groupSlug}-${sc.categorySlug}`} value={sc.categorySlug}>
+                    {sc.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
           <TextField label="Vendor" value={form.vendor} onChange={(v) => update("vendor", v)} />
           <TextField label="Fabric" value={form.fabric} onChange={(v) => update("fabric", v)} />
           <TextField label="Colour family" value={form.colorFamily} onChange={(v) => update("colorFamily", v)} />

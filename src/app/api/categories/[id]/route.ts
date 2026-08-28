@@ -19,6 +19,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Params }
       description: body.description,
       imageUrl: body.imageUrl,
       groupSlug: body.groupSlug,
+      parentSlug: body.parentSlug,
     });
     if (!updated) return NextResponse.json({ ok: false, error: "Not found" }, { status: 404 });
     return NextResponse.json({ ok: true, category: updated });

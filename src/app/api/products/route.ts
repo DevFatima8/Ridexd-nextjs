@@ -17,6 +17,7 @@ export async function GET(request: NextRequest) {
   const result = await listProducts({
     group: searchParams.get("group") ?? undefined,
     category: searchParams.get("category") ?? undefined,
+    subcategory: searchParams.get("subcategory") ?? undefined,
     q: searchParams.get("q") ?? undefined,
     sort: searchParams.get("sort") ?? undefined,
     status: searchParams.get("status") ?? undefined,
@@ -55,6 +56,7 @@ export async function POST(request: NextRequest) {
       description: String(body.description ?? ""),
       groupSlug,
       categorySlug: String(body.categorySlug ?? "stitched"),
+      subcategorySlug: String(body.subcategorySlug ?? ""),
       price: Number(body.price ?? 0),
       compareAtPrice: Number(body.compareAtPrice ?? 0),
       cost: Number(body.cost ?? 0),
