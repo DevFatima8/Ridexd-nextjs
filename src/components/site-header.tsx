@@ -49,7 +49,6 @@ export function SiteHeader({ categories = [] }: { categories?: CategoryWithCount
           <div className="flex items-center gap-4">
             <Link href="/contact" className="hover:text-gold-soft">Contact</Link>
             <Link href="/track" className="hover:text-gold-soft">Track order</Link>
-            <Link href="/admin" className="hover:text-gold-soft">Admin</Link>
           </div>
         </div>
       </div>
