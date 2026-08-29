@@ -18,7 +18,7 @@ export function SiteFooter({ categories = [] }: { categories?: CategoryWithCount
             Ridexd.com is a modern eastern lifestyle store — shalwar kameez for women and men,
             kidswear and complete bed &amp; bath textiles, delivered across Pakistan.
           </p>
-          
+
           {/* Social Links */}
           <div className="mt-5 space-y-2">
             <p className="text-[10px] tracking-[0.24em] text-gold-soft uppercase font-semibold">Follow Us</p>
@@ -97,7 +97,6 @@ export function SiteFooter({ categories = [] }: { categories?: CategoryWithCount
             <Link href="/about" className="hover:text-white">About</Link>
             <Link href="/contact" className="hover:text-white">Contact</Link>
             <Link href="/track" className="hover:text-white">Track order</Link>
-            <Link href="/admin" className="hover:text-white">Admin panel</Link>
           </div>
         </div>
       </div>
