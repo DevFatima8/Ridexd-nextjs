@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
       compareAtPrice: Number(body.compareAtPrice ?? 0),
       cost: Number(body.cost ?? 0),
       sku: String(body.sku ?? `RDX-${Date.now().toString().slice(-6)}`),
-      barcode: String(body.barcode ?? ""),
+      barcode: "",
       stock: Number(body.stock ?? 0),
       sizes: Array.isArray(body.sizes) ? body.sizes.map(String) : [],
       images,

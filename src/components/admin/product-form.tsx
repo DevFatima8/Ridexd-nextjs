@@ -37,7 +37,6 @@ export function ProductForm({
     compareAtPrice: product?.compareAtPrice ?? 0,
     cost: product?.cost ?? 0,
     sku: product?.sku ?? "",
-    barcode: product?.barcode ?? "",
     stock: product?.stock ?? 0,
     fabric: product?.fabric ?? "",
     colorFamily: product?.colorFamily ?? "",
@@ -45,6 +44,9 @@ export function ProductForm({
     status: product?.status ?? "active",
     featured: product?.featured ?? false,
   });
+  const [stockType, setStockType] = useState<"limited" | "unlimited">(
+    product?.stock && product.stock >= 9999 ? "unlimited" : "limited",
+  );
   const [images, setImages] = useState<string[]>(product?.images ?? []);
   const [sizes, setSizes] = useState<string[]>(product?.sizes ?? []);
   const [imageInput, setImageInput] = useState("");
@@ -459,9 +461,49 @@ export function ProductForm({
 
         <section className="rounded-lg border border-[#e3e5e7] bg-white p-5">
           <p className="text-[13px] font-semibold">Inventory</p>
-          <NumberField label="Quantity in stock" value={form.stock} onChange={(v) => update("stock", v)} />
+          <div className="mt-3">
+            <p className="text-[12px] text-[#6d7175]">Stock policy</p>
+            <div className="mt-2 flex gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setStockType("limited");
+                  if (form.stock >= 9999) update("stock", 10);
+                }}
+                className={`flex-1 rounded border px-3 py-2 text-[12px] font-medium transition ${
+                  stockType === "limited"
+                    ? "border-[#00a0ac] bg-[#e6f7f8] text-[#0b7c86]"
+                    : "border-[#c9cccf] bg-white hover:bg-[#f4f5f7]"
+                }`}
+              >
+                Limited Stock
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setStockType("unlimited");
+                  update("stock", 9999);
+                }}
+                className={`flex-1 rounded border px-3 py-2 text-[12px] font-medium transition ${
+                  stockType === "unlimited"
+                    ? "border-[#00a0ac] bg-[#e6f7f8] text-[#0b7c86]"
+                    : "border-[#c9cccf] bg-white hover:bg-[#f4f5f7]"
+                }`}
+              >
+                Unlimited Stock
+              </button>
+            </div>
+          </div>
+
+          {stockType === "limited" ? (
+            <NumberField label="Quantity in stock" value={form.stock} onChange={(v) => update("stock", v)} />
+          ) : (
+            <div className="mt-3 rounded border border-[#e3e5e7] bg-[#fafbfb] p-3 text-[12px] text-[#6d7175]">
+              ✓ Product is marked with unlimited stock quantity.
+            </div>
+          )}
+
           <TextField label="SKU" value={form.sku} onChange={(v) => update("sku", v)} />
-          <TextField label="Barcode" value={form.barcode} onChange={(v) => update("barcode", v)} />
         </section>
 
         <div className="sticky bottom-4 space-y-2 rounded-lg border border-[#e3e5e7] bg-white p-4">

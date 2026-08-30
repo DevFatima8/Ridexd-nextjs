@@ -65,13 +65,17 @@ export function SiteFooter({ categories = [] }: { categories?: CategoryWithCount
           </div>
         </div>
 
-        {GROUPS.slice(0, 3).map((group) => (
-          <div key={group.slug}>
-            <p className="text-[11px] tracking-[0.24em] text-gold-soft uppercase">{group.name}</p>
-            <ul className="mt-4 space-y-2 text-sm text-cream/75">
-              {categories
-                .filter((cat) => cat.groupSlug === group.slug)
-                .map((cat) => (
+        {GROUPS.slice(0, 3).map((group) => {
+          const removedSlugs = new Set(["shawls-dupattas", "1-pc", "separate-pieces"]);
+          const filteredCategories = categories.filter(
+            (cat) => cat.groupSlug === group.slug && !cat.parentSlug && !removedSlugs.has(cat.categorySlug),
+          );
+
+          return (
+            <div key={group.slug}>
+              <p className="text-[11px] tracking-[0.24em] text-gold-soft uppercase">{group.name}</p>
+              <ul className="mt-4 space-y-2 text-sm text-cream/75">
+                {filteredCategories.map((cat) => (
                   <li key={cat.id}>
                     <Link
                       href={`/shop?group=${group.slug}&category=${cat.categorySlug}`}
@@ -81,9 +85,10 @@ export function SiteFooter({ categories = [] }: { categories?: CategoryWithCount
                     </Link>
                   </li>
                 ))}
-            </ul>
-          </div>
-        ))}
+              </ul>
+            </div>
+          );
+        })}
       </div>
 
       <div className="border-t border-white/10">
