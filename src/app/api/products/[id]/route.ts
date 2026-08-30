@@ -30,7 +30,6 @@ export async function PATCH(request: NextRequest, { params }: { params: Params }
       "categorySlug",
       "subcategorySlug",
       "sku",
-      "barcode",
       "fabric",
       "colorFamily",
       "status",
