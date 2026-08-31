@@ -31,58 +31,70 @@ export default function CartPage() {
       ) : (
         <div className="mt-10 grid gap-10 lg:grid-cols-[1fr_360px]">
           <div className="divide-y divide-sand border-y border-sand">
-            {lines.map((line) => (
-              <div key={`${line.productId}-${line.variant}`} className="flex gap-5 py-6">
-                {line.image ? (
-                  /* eslint-disable-next-line @next/next/no-img-element */
-                  <img src={line.image} alt={line.title} className="h-36 w-28 rounded object-cover" />
-                ) : (
-                  <div className="flex h-36 w-28 items-center justify-center rounded bg-sand text-xs text-ink-soft/40">
-                    No img
-                  </div>
-                )}
-                <div className="flex-1">
-                  <div className="flex flex-wrap items-start justify-between gap-3">
-                    <div>
-                      <Link href={`/product/${line.slug}`} className="text-lg font-medium hover:text-plum">
-                        {line.title}
-                      </Link>
-                      <p className="mt-1 text-xs text-ink-soft/70">
-                        {line.variant ? `Size: ${line.variant} · ` : ""}
-                        {formatPKR(line.price)} each
-                      </p>
+            {lines.map((line) => {
+              const isOutOfStock = typeof line.stock === "number" && line.stock <= 0;
+              const isOverStock = typeof line.stock === "number" && line.quantity > line.stock;
+              return (
+                <div key={`${line.productId}-${line.variant}`} className="flex gap-5 py-6">
+                  {line.image ? (
+                    /* eslint-disable-next-line @next/next/no-img-element */
+                    <img src={line.image} alt={line.title} className="h-36 w-28 rounded object-cover" />
+                  ) : (
+                    <div className="flex h-36 w-28 items-center justify-center rounded bg-sand text-xs text-ink-soft/40">
+                      No img
                     </div>
-                    <p className="font-semibold">{formatPKR(line.price * line.quantity)}</p>
-                  </div>
-                  <div className="mt-5 flex items-center gap-4">
-                    <div className="flex items-center border border-sand">
+                  )}
+                  <div className="flex-1">
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div>
+                        <Link href={`/product/${line.slug}`} className="text-lg font-medium hover:text-plum">
+                          {line.title}
+                        </Link>
+                        <p className="mt-1 text-xs text-ink-soft/70">
+                          {line.variant ? `Size: ${line.variant} · ` : ""}
+                          {formatPKR(line.price)} each
+                        </p>
+                        {isOutOfStock ? (
+                          <p className="mt-1 text-xs font-semibold text-red-600">Out of Stock</p>
+                        ) : isOverStock ? (
+                          <p className="mt-1 text-xs font-semibold text-amber-700">
+                            Limited Stock
+                          </p>
+                        ) : null}
+                      </div>
+                      <p className="font-semibold">{formatPKR(line.price * line.quantity)}</p>
+                    </div>
+                    <div className="mt-5 flex items-center gap-4">
+                      <div className="flex items-center border border-sand">
+                        <button
+                          type="button"
+                          className="px-3.5 py-2"
+                          onClick={() => setQuantity(line.productId, line.variant, line.quantity - 1)}
+                        >
+                          −
+                        </button>
+                        <span className="w-10 text-center text-sm">{line.quantity}</span>
+                        <button
+                          type="button"
+                          className="px-3.5 py-2 disabled:opacity-30"
+                          disabled={typeof line.stock === "number" && line.quantity >= line.stock}
+                          onClick={() => setQuantity(line.productId, line.variant, line.quantity + 1)}
+                        >
+                          +
+                        </button>
+                      </div>
                       <button
                         type="button"
-                        className="px-3.5 py-2"
-                        onClick={() => setQuantity(line.productId, line.variant, line.quantity - 1)}
+                        onClick={() => removeLine(line.productId, line.variant)}
+                        className="text-xs tracking-[0.16em] text-ink-soft/60 uppercase hover:text-plum"
                       >
-                        −
-                      </button>
-                      <span className="w-10 text-center text-sm">{line.quantity}</span>
-                      <button
-                        type="button"
-                        className="px-3.5 py-2"
-                        onClick={() => setQuantity(line.productId, line.variant, line.quantity + 1)}
-                      >
-                        +
+                        Remove
                       </button>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => removeLine(line.productId, line.variant)}
-                      className="text-xs tracking-[0.16em] text-ink-soft/60 uppercase hover:text-plum"
-                    >
-                      Remove
-                    </button>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           <aside className="h-fit rounded-2xl border border-sand bg-cream p-6">

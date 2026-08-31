@@ -40,7 +40,10 @@ export async function PATCH(request: NextRequest, { params }: { params: Params }
     });
     const numbers = ["price", "compareAtPrice", "cost", "stock"] as const;
     numbers.forEach((key) => {
-      if (body[key] !== undefined) patch[key] = Number(body[key]);
+      if (body[key] !== undefined) {
+        const val = Number(body[key]);
+        patch[key] = key === "stock" ? Math.max(0, Math.floor(Number.isNaN(val) ? 0 : val)) : val;
+      }
     });
     if (body.featured !== undefined) patch.featured = Boolean(body.featured);
     if (Array.isArray(body.sizes)) patch.sizes = body.sizes.map(String);

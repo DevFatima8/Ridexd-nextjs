@@ -4,6 +4,7 @@ import { ProductRowActions } from "@/components/admin/product-row-actions";
 import { isAdmin } from "@/lib/auth";
 import { GROUPS, categoryLabel, formatPKR } from "@/lib/catalog";
 import { getCategoryOverview, listProducts } from "@/lib/queries";
+import { getAdminStockBadge } from "@/lib/stock";
 
 export const dynamic = "force-dynamic";
 
@@ -138,63 +139,60 @@ export default async function AdminProductsPage({ searchParams }: { searchParams
             <tr>
               <th className="px-4 py-3">Product</th>
               <th className="px-3 py-3">Department</th>
-              <th className="px-3 py-3">Category</th>
-              <th className="px-3 py-3">Status</th>
-              <th className="px-3 py-3">Inventory</th>
+              <th className="px-3 py-3 text-right">Stock</th>
+              <th className="px-3 py-3">Stock Status</th>
+              <th className="px-3 py-3 text-right">Sold</th>
               <th className="px-3 py-3 text-right">Price</th>
               <th className="px-4 py-3 text-right">Actions</th>
             </tr>
           </thead>
           <tbody>
-            {result.items.map((product) => (
-              <tr key={product.id} className="border-t border-[#f1f2f3] align-middle hover:bg-[#fafbfb]">
-                <td className="px-4 py-3">
-                  <div className="flex items-center gap-3">
-                    {product.images?.[0] ? (
-                      /* eslint-disable-next-line @next/next/no-img-element */
-                      <img
-                        src={product.images[0]}
-                        alt={product.title}
-                        className="h-11 w-9 rounded object-cover"
-                      />
-                    ) : (
-                      <div className="flex h-11 w-9 items-center justify-center rounded bg-[#f1f2f3] text-[9px] font-semibold text-[#8c9196]">
-                        NO IMG
+            {result.items.map((product) => {
+              const stockBadge = getAdminStockBadge(product.stock);
+              return (
+                <tr key={product.id} className="border-t border-[#f1f2f3] align-middle hover:bg-[#fafbfb]">
+                  <td className="px-4 py-3">
+                    <div className="flex items-center gap-3">
+                      {product.images?.[0] ? (
+                        /* eslint-disable-next-line @next/next/no-img-element */
+                        <img
+                          src={product.images[0]}
+                          alt={product.title}
+                          className="h-11 w-9 rounded object-cover"
+                        />
+                      ) : (
+                        <div className="flex h-11 w-9 items-center justify-center rounded bg-[#f1f2f3] text-[9px] font-semibold text-[#8c9196]">
+                          NO IMG
+                        </div>
+                      )}
+                      <div>
+                        <Link href={`/admin/products/${product.id}`} className="font-medium text-[#00a0ac]">
+                          {product.title}
+                        </Link>
+                        <p className="text-[11px] text-[#8c9196]">{product.sku}</p>
                       </div>
-                    )}
-                    <div>
-                      <Link href={`/admin/products/${product.id}`} className="font-medium text-[#00a0ac]">
-                        {product.title}
-                      </Link>
-                      <p className="text-[11px] text-[#8c9196]">{product.sku}</p>
                     </div>
-                  </div>
-                </td>
-                <td className="px-3 py-3 capitalize">{product.groupSlug}</td>
-                <td className="px-3 py-3">
-                  {categoryLabel(product.groupSlug, product.categorySlug)}
-                </td>
-                <td className="px-3 py-3">
-                  <span
-                    className={`rounded px-2 py-0.5 text-[11px] capitalize ${
-                      product.status === "active"
-                        ? "bg-[#e3f4e6] text-[#107f5a]"
-                        : "bg-[#f1f2f3] text-[#6d7175]"
-                    }`}
-                  >
-                    {product.status}
-                  </span>
-                </td>
-                <td className="px-3 py-3">
-                  <span className={product.stock <= 10 ? "text-[#d72c0d]" : ""}>{product.stock}</span>{" "}
-                  in stock
-                </td>
-                <td className="px-3 py-3 text-right font-medium">{formatPKR(product.price)}</td>
-                <td className="px-4 py-3">
-                  <ProductRowActions id={product.id} title={product.title} />
-                </td>
-              </tr>
-            ))}
+                  </td>
+                  <td className="px-3 py-3 capitalize">
+                    {product.groupSlug}
+                    <p className="text-[11px] text-[#8c9196]">
+                      {categoryLabel(product.groupSlug, product.categorySlug)}
+                    </p>
+                  </td>
+                  <td className="px-3 py-3 text-right font-medium">{product.stock}</td>
+                  <td className="px-3 py-3">
+                    <span className={`inline-flex items-center rounded px-2.5 py-0.5 text-[11px] font-semibold ${stockBadge.badgeClass}`}>
+                      {stockBadge.status}
+                    </span>
+                  </td>
+                  <td className="px-3 py-3 text-right font-medium">{product.totalSold}</td>
+                  <td className="px-3 py-3 text-right font-medium">{formatPKR(product.price)}</td>
+                  <td className="px-4 py-3">
+                    <ProductRowActions id={product.id} title={product.title} />
+                  </td>
+                </tr>
+              );
+            })}
             {result.items.length === 0 && (
               <tr>
                 <td colSpan={7} className="px-4 py-12 text-center text-[#8c9196]">

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import type { ProductRow } from "@/db/schema";
 import { categoryLabel, formatPKR } from "@/lib/catalog";
+import { getStoreStockInfo } from "@/lib/stock";
 import { useCart } from "./cart-provider";
 
 import { StarRating } from "./star-rating";
@@ -23,6 +24,7 @@ export function ProductCard({
 
   const avgScore = rating?.avg ?? product.avgRating;
   const totalCount = rating?.total ?? product.reviewCount;
+  const stockInfo = getStoreStockInfo(product.stock);
 
   return (
     <div className="group relative flex flex-col">
@@ -63,11 +65,15 @@ export function ProductCard({
               Featured
             </span>
           )}
-          {product.stock <= 10 && (
-            <span className="rounded bg-ink px-2 py-1 text-[10px] tracking-[0.16em] text-white uppercase">
-              Low stock
+          {stockInfo.status === "Out of Stock" ? (
+            <span className="rounded bg-red-600 px-2 py-1 text-[10px] tracking-[0.16em] text-white uppercase">
+              Out of Stock
             </span>
-          )}
+          ) : stockInfo.status === "Limited Stock" ? (
+            <span className="rounded bg-amber-600 px-2 py-1 text-[10px] tracking-[0.16em] text-white uppercase">
+              Limited Stock
+            </span>
+          ) : null}
         </div>
       </Link>
 
@@ -86,10 +92,10 @@ export function ProductCard({
             stock: product.stock,
           })
         }
-        disabled={product.stock <= 0}
-        className="mt-3 w-full rounded-full border border-ink py-2 text-[10px] tracking-[0.2em] uppercase transition hover:bg-ink hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
+        disabled={!stockInfo.isAvailable}
+        className="mt-3 w-full rounded-full border border-ink py-2 text-[10px] tracking-[0.2em] uppercase transition hover:bg-ink hover:text-white disabled:cursor-not-allowed disabled:border-gray-300 disabled:bg-gray-100 disabled:text-gray-400 disabled:opacity-75"
       >
-        {product.stock > 0 ? "Quick add" : "Sold out"}
+        {stockInfo.isAvailable ? "Quick add" : "Out of Stock"}
       </button>
 
       <div className="mt-3 flex flex-1 flex-col">
