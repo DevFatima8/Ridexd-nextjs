@@ -1,4 +1,4 @@
-export type GroupSlug = "women" | "men" | "kids" | "bed" | "bath";
+export type GroupSlug = "women" | "men" | "kids" | "bed" | "bath" | "accessories";
 
 export type GroupMeta = {
   slug: GroupSlug;
@@ -71,6 +71,16 @@ export const GROUPS: GroupMeta[] = [
     image:
       "https://images.pexels.com/photos/20665616/pexels-photo-20665616.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=627&w=1200",
     accent: "from-cyan-100 to-teal-50",
+  },
+  {
+    slug: "accessories",
+    name: "Accessories",
+    tagline: "Bags · Jewellery · Scarves · Footwear · Belts & Eyewear",
+    description:
+      "Curated luxury and everyday accessories — handcrafted handbags, statement jewellery, silk scarves, leather footwear, belts and eyewear to elevate your style.",
+    image:
+      "https://images.pexels.com/photos/1152077/pexels-photo-1152077.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1200&w=800",
+    accent: "from-amber-100 to-amber-50",
   },
 ];
 
@@ -465,6 +475,104 @@ export const CATEGORIES: CategoryMeta[] = [
     tagline: "Bundles, bins & dispensers",
     image:
       "https://images.pexels.com/photos/34636330/pexels-photo-34636330.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=627&w=1200",
+  },
+
+  // ---------- Accessories Main Categories ----------
+  {
+    group: "accessories",
+    slug: "bags",
+    name: "Bags & Clutches",
+    tagline: "Handbags, Clutches & Wallets",
+    image:
+      "https://images.pexels.com/photos/1152077/pexels-photo-1152077.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1200&w=800",
+  },
+  {
+    group: "accessories",
+    slug: "jewelry",
+    name: "Jewellery & Watches",
+    tagline: "Earrings, Necklaces & Bangles",
+    image:
+      "https://images.pexels.com/photos/1458867/pexels-photo-1458867.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1200&w=800",
+  },
+  {
+    group: "accessories",
+    slug: "scarves",
+    name: "Scarves & Shawls",
+    tagline: "Silk Scarves & Pashmina Shawls",
+    image:
+      "https://images.pexels.com/photos/375880/pexels-photo-375880.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1200&w=800",
+  },
+  {
+    group: "accessories",
+    slug: "footwear",
+    name: "Footwear & Khussas",
+    tagline: "Traditional Khussas & Sandals",
+    image:
+      "https://images.pexels.com/photos/267242/pexels-photo-267242.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1200&w=800",
+  },
+  {
+    group: "accessories",
+    slug: "belts",
+    name: "Belts & Eyewear",
+    tagline: "Leather Belts & Sunglasses",
+    image:
+      "https://images.pexels.com/photos/701877/pexels-photo-701877.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1200&w=800",
+  },
+
+  // ---------- Accessories Subcategories ----------
+  {
+    group: "accessories",
+    slug: "bags-handbags",
+    parentSlug: "bags",
+    name: "Handbags & Totes",
+    tagline: "Everyday leather & canvas totes",
+    image:
+      "https://images.pexels.com/photos/1152077/pexels-photo-1152077.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1200&w=800",
+  },
+  {
+    group: "accessories",
+    slug: "bags-clutches",
+    parentSlug: "bags",
+    name: "Clutches & Evening Bags",
+    tagline: "Embellished clutches & wristlets",
+    image:
+      "https://images.pexels.com/photos/1152077/pexels-photo-1152077.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1200&w=800",
+  },
+  {
+    group: "accessories",
+    slug: "jewelry-earrings",
+    parentSlug: "jewelry",
+    name: "Earrings & Rings",
+    tagline: "Jhumkas, studs & statement rings",
+    image:
+      "https://images.pexels.com/photos/1458867/pexels-photo-1458867.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1200&w=800",
+  },
+  {
+    group: "accessories",
+    slug: "jewelry-necklaces",
+    parentSlug: "jewelry",
+    name: "Necklaces & Sets",
+    tagline: "Chokers, pendants & bridal sets",
+    image:
+      "https://images.pexels.com/photos/1458867/pexels-photo-1458867.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1200&w=800",
+  },
+  {
+    group: "accessories",
+    slug: "scarves-dupattas",
+    parentSlug: "scarves",
+    name: "Silk Dupattas & Stoles",
+    tagline: "Printed silk dupattas & stoles",
+    image:
+      "https://images.pexels.com/photos/375880/pexels-photo-375880.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1200&w=800",
+  },
+  {
+    group: "accessories",
+    slug: "footwear-khussas",
+    parentSlug: "footwear",
+    name: "Embroidered Khussas",
+    tagline: "Handcrafted leather khussas",
+    image:
+      "https://images.pexels.com/photos/267242/pexels-photo-267242.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1200&w=800",
   },
 ];
 

@@ -292,7 +292,33 @@ const SEED: Record<GroupSlug, Record<string, Draft[]>> = {
       ["Bath Accessory Set of 6", "Complete bath kit", 3450, 4400, "PP & Bamboo", "Grey", 2, 4],
     ],
   },
+  accessories: {
+    bags: [
+      ["Classic Leather Tote Bag", "Everyday handbag with zip", 4950, 6500, "Genuine Leather", "Tan", 0, 1],
+      ["Embellished Velvet Clutch", "Evening clutch with chain strap", 3850, 4900, "Velvet & Beads", "Emerald", 1, 2],
+      ["Monogram Leather Wallet", "Zip-around cardholder wallet", 2250, 2900, "Faux Leather", "Black", 2, 3],
+    ],
+    jewelry: [
+      ["Traditional Kundan Jhumka", "Handcrafted bridal earrings", 2950, 3800, "Brass & Pearl", "Gold", 0, 2],
+      ["Minimalist Pendant Necklace", "18k gold plated chain", 1850, 2400, "Stainless Steel", "Gold", 1, 3],
+      ["Crystal Bangle Set", "Set of 6 embellished bangles", 2450, 3100, "Alloy & Crystal", "Rose Gold", 3, 4],
+    ],
+    scarves: [
+      ["Printed Silk Dupatta", "Pure silk 2.5m stole", 3250, 4200, "Pure Silk", "Multi", 0, 3],
+      ["Pashmina Wool Shawl", "Hand-woven winter shawl", 6850, 8900, "Pashmina Wool", "Maroon", 2, 4],
+    ],
+    footwear: [
+      ["Handcrafted Leather Khussa", "Embroidered traditional khussa", 3450, 4500, "Leather", "Gold", 1, 3],
+      ["Strappy Summer Sandals", "Comfortable flat sandals", 2750, 3600, "Synthetic Leather", "Beige", 2, 4],
+    ],
+    belts: [
+      ["Classic Leather Belt", "Reversible buckle belt", 1950, 2600, "Genuine Leather", "Brown", 0, 1],
+      ["Cat-Eye UV Sunglasses", "Polarized fashion eyewear", 2450, 3200, "Acetate", "Black", 2, 3],
+    ],
+  },
 };
+
+const ACCESSORY_SIZES = ["One Size", "S", "M", "L", "37", "38", "39", "40"];
 
 const SIZES_BY_GROUP: Record<GroupSlug, string[]> = {
   women: CLOTHING_SIZES,
@@ -300,9 +326,10 @@ const SIZES_BY_GROUP: Record<GroupSlug, string[]> = {
   kids: KID_SIZES,
   bed: LINEN_SIZES,
   bath: LINEN_SIZES,
+  accessories: ACCESSORY_SIZES,
 };
 
-const IMG: Record<GroupSlug, string[]> = { women: W, men: M, kids: K, bed: H, bath: H };
+const IMG: Record<GroupSlug, string[]> = { women: W, men: M, kids: K, bed: H, bath: H, accessories: W };
 const BABY_CATEGORIES = ["baby"];
 
 function slugify(value: string): string {

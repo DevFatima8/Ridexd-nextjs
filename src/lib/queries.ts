@@ -1,7 +1,7 @@
 import { and, asc, count, desc, eq, gte, inArray, lte, or, sql } from "drizzle-orm";
 import { db } from "@/db";
-import { categories, contactMessages, orderItems, orders, products } from "@/db/schema";
-import type { ContactMessageRow, NewProductRow, OrderItemRow, OrderRow, ProductRow } from "@/db/schema";
+import { categories, contactMessages, orderItems, orders, productReviews, products } from "@/db/schema";
+import type { ContactMessageRow, NewProductReviewRow, NewProductRow, OrderItemRow, OrderRow, ProductReviewRow, ProductRow } from "@/db/schema";
 import type { AnyColumn } from "drizzle-orm";
 import { CATEGORIES } from "./catalog";
 import { SEED_PRODUCTS } from "./seed-data";
@@ -157,6 +157,41 @@ async function ensureSchemaColumns(): Promise<void> {
     await db.execute(sql`ALTER TABLE products ADD COLUMN subcategory_slug VARCHAR(80) NOT NULL DEFAULT ''`);
   } catch {
     // Ignored if column exists
+  }
+  try {
+    await db.execute(sql`
+      CREATE TABLE IF NOT EXISTS product_reviews (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        product_id INT NOT NULL,
+        customer_name VARCHAR(140) NOT NULL,
+        customer_email VARCHAR(160) NOT NULL,
+        rating INT NOT NULL,
+        comment TEXT NOT NULL,
+        status VARCHAR(20) NOT NULL DEFAULT 'approved',
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        UNIQUE KEY uniq_product_reviews_product_customer (product_id, customer_email)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    `);
+  } catch {
+    try {
+      await db.execute(sql`
+        CREATE TABLE IF NOT EXISTS product_reviews (
+          id SERIAL PRIMARY KEY,
+          product_id INT NOT NULL,
+          customer_name VARCHAR(140) NOT NULL,
+          customer_email VARCHAR(160) NOT NULL,
+          rating INT NOT NULL,
+          comment TEXT NOT NULL,
+          status VARCHAR(20) NOT NULL DEFAULT 'approved',
+          created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+          updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+          CONSTRAINT uniq_product_reviews_product_customer UNIQUE (product_id, customer_email)
+        );
+      `);
+    } catch {
+      // Ignored if table exists
+    }
   }
 }
 
@@ -750,6 +785,7 @@ export async function listOrderNotifications(): Promise<
 export async function getAdminStats(): Promise<{
   products: { total: number; active: number; lowStock: number; inventoryValue: number };
   orders: { total: number; pending: number; revenue: number };
+  reviews: { total: number; pending: number; avgRating: number };
   recentOrders: OrderRow[];
   topGroups: { group: string; value: number }[];
 }> {
@@ -772,6 +808,27 @@ export async function getAdminStats(): Promise<{
       })
       .from(orders);
 
+    let reviewTotal = 0;
+    let reviewPending = 0;
+    let avgRating = 0;
+    try {
+      const [revAgg] = await db
+        .select({
+          total: count(),
+          pending: sql<number>`count(case when ${productReviews.status} = 'pending' then 1 end)`,
+          avgRating: sql<number>`coalesce(avg(${productReviews.rating}), 0)`,
+        })
+        .from(productReviews);
+      reviewTotal = Number(revAgg?.total ?? 0);
+      reviewPending = Number(revAgg?.pending ?? 0);
+      avgRating = Number(revAgg?.avgRating ?? 0);
+    } catch {
+      reviewTotal = FALLBACK_REVIEWS.length;
+      reviewPending = FALLBACK_REVIEWS.filter((r) => r.status === "pending").length;
+      avgRating =
+        FALLBACK_REVIEWS.reduce((sum, r) => sum + r.rating, 0) / (FALLBACK_REVIEWS.length || 1);
+    }
+
     const recentOrders = await db.select().from(orders).orderBy(desc(orders.id)).limit(6);
     const topGroups = await db
       .select({ groupSlug: products.groupSlug, value: count() })
@@ -789,6 +846,11 @@ export async function getAdminStats(): Promise<{
         total: Number(orderAgg?.total ?? 0),
         pending: Number(orderAgg?.pending ?? 0),
         revenue: Number(orderAgg?.revenue ?? 0),
+      },
+      reviews: {
+        total: reviewTotal,
+        pending: reviewPending,
+        avgRating: Math.round(avgRating * 10) / 10,
       },
       recentOrders,
       topGroups: topGroups.map((g: { groupSlug: string; value: number | string }) => ({ group: g.groupSlug, value: Number(g.value) })),
@@ -814,6 +876,11 @@ export async function getAdminStats(): Promise<{
         total: 0,
         pending: 0,
         revenue: 0,
+      },
+      reviews: {
+        total: FALLBACK_REVIEWS.length,
+        pending: FALLBACK_REVIEWS.filter((r) => r.status === "pending").length,
+        avgRating: 4.7,
       },
       recentOrders: [],
       topGroups,
@@ -924,4 +991,493 @@ export async function deleteContactMessage(id: number) {
     return false;
   }
 }
+
+/* --------------------------- product reviews ---------------------------- */
+
+export type ProductReviewSummary = {
+  average: number;
+  total: number;
+  counts: { 1: number; 2: number; 3: number; 4: number; 5: number };
+};
+
+let FALLBACK_REVIEWS: ProductReviewRow[] = [
+  {
+    id: 1,
+    productId: 1,
+    customerName: "Ayesha Khan",
+    customerEmail: "ayesha@example.com",
+    rating: 5,
+    comment: "Absolutely stunning quality and craftsmanship! The embroidery on the neckline is exquisite.",
+    status: "approved",
+    createdAt: new Date(Date.now() - 86400000 * 3),
+    updatedAt: new Date(Date.now() - 86400000 * 3),
+  },
+  {
+    id: 2,
+    productId: 1,
+    customerName: "Zainab Malik",
+    customerEmail: "zainab@example.com",
+    rating: 4,
+    comment: "Very elegant fabric. Sizing fits perfectly according to the size guide. Fast shipping to Lahore!",
+    status: "approved",
+    createdAt: new Date(Date.now() - 86400000 * 7),
+    updatedAt: new Date(Date.now() - 86400000 * 7),
+  },
+  {
+    id: 3,
+    productId: 2,
+    customerName: "Hamza Tariq",
+    customerEmail: "hamza@example.com",
+    rating: 5,
+    comment: "Great premium texture and comfortable fit. Highly recommended!",
+    status: "approved",
+    createdAt: new Date(Date.now() - 86400000 * 2),
+    updatedAt: new Date(Date.now() - 86400000 * 2),
+  },
+];
+
+export async function getProductReviewSummary(productId: number): Promise<ProductReviewSummary> {
+  const counts: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+  try {
+    await ensureSeeded();
+    const rows = await db
+      .select({
+        rating: productReviews.rating,
+        cnt: count(),
+      })
+      .from(productReviews)
+      .where(and(eq(productReviews.productId, productId), eq(productReviews.status, "approved")))
+      .groupBy(productReviews.rating);
+
+    let total = 0;
+    let sum = 0;
+    rows.forEach((r: { rating: number; cnt: number | string }) => {
+      const rating = Number(r.rating);
+      const cnt = Number(r.cnt);
+      if (rating >= 1 && rating <= 5) {
+        counts[rating] = cnt;
+        total += cnt;
+        sum += rating * cnt;
+      }
+    });
+
+    const average = total > 0 ? Math.round((sum / total) * 10) / 10 : 0;
+    return {
+      average,
+      total,
+      counts: counts as { 1: number; 2: number; 3: number; 4: number; 5: number },
+    };
+  } catch (error) {
+    console.warn("[ridexd] getProductReviewSummary DB error, using fallback");
+    const matching = FALLBACK_REVIEWS.filter((r) => r.productId === productId && r.status === "approved");
+    let total = 0;
+    let sum = 0;
+    matching.forEach((r) => {
+      counts[r.rating] = (counts[r.rating] ?? 0) + 1;
+      total += 1;
+      sum += r.rating;
+    });
+    return {
+      average: total > 0 ? Math.round((sum / total) * 10) / 10 : 0,
+      total,
+      counts: counts as { 1: number; 2: number; 3: number; 4: number; 5: number },
+    };
+  }
+}
+
+export async function listProductReviews(
+  productId: number,
+  page = 1,
+  pageSize = 10,
+  includePendingEmail?: string,
+): Promise<{ items: ProductReviewRow[]; total: number; page: number; pageSize: number; pageCount: number }> {
+  try {
+    await ensureSeeded();
+    const p = Math.max(1, page);
+    const ps = Math.min(50, Math.max(1, pageSize));
+
+    const statusCondition = includePendingEmail
+      ? or(
+          eq(productReviews.status, "approved"),
+          and(
+            eq(productReviews.status, "pending"),
+            sql`lower(${productReviews.customerEmail}) = lower(${includePendingEmail.trim()})`,
+          ),
+        )
+      : eq(productReviews.status, "approved");
+
+    const where = and(eq(productReviews.productId, productId), statusCondition);
+
+    const rows = await db
+      .select()
+      .from(productReviews)
+      .where(where)
+      .orderBy(desc(productReviews.createdAt), desc(productReviews.id))
+      .limit(ps)
+      .offset((p - 1) * ps);
+
+    const [{ value }] = await db.select({ value: count() }).from(productReviews).where(where);
+    const total = Number(value);
+
+    return {
+      items: rows,
+      total,
+      page: p,
+      pageSize: ps,
+      pageCount: Math.max(1, Math.ceil(total / ps)),
+    };
+  } catch (error) {
+    console.warn("[ridexd] listProductReviews DB error, using fallback");
+    const matching = FALLBACK_REVIEWS.filter(
+      (r) =>
+        r.productId === productId &&
+        (r.status === "approved" ||
+          (includePendingEmail &&
+            r.customerEmail.toLowerCase() === includePendingEmail.toLowerCase().trim())),
+    ).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+    const total = matching.length;
+    const items = matching.slice((page - 1) * pageSize, page * pageSize);
+    return {
+      items,
+      total,
+      page,
+      pageSize,
+      pageCount: Math.max(1, Math.ceil(total / pageSize)),
+    };
+  }
+}
+
+export async function getCustomerProductReview(
+  productId: number,
+  customerEmail: string,
+): Promise<ProductReviewRow | null> {
+  const email = customerEmail.trim().toLowerCase();
+  if (!email) return null;
+  try {
+    await ensureSeeded();
+    const rows = await db
+      .select()
+      .from(productReviews)
+      .where(
+        and(
+          eq(productReviews.productId, productId),
+          sql`lower(${productReviews.customerEmail}) = lower(${email})`,
+        ),
+      )
+      .limit(1);
+    return rows[0] ?? null;
+  } catch (error) {
+    return (
+      FALLBACK_REVIEWS.find(
+        (r) => r.productId === productId && r.customerEmail.toLowerCase() === email,
+      ) ?? null
+    );
+  }
+}
+
+export async function createOrUpdateReview(input: {
+  productId: number;
+  customerName: string;
+  customerEmail: string;
+  rating: number;
+  comment: string;
+}): Promise<ProductReviewRow> {
+  await ensureSeeded();
+  const name = input.customerName.trim();
+  const email = input.customerEmail.trim().toLowerCase();
+  const comment = input.comment.trim();
+  const rating = Math.max(1, Math.min(5, Math.round(input.rating)));
+
+  if (!name) throw new Error("Name is required");
+  if (!email || !email.includes("@")) throw new Error("Valid email is required");
+  if (rating < 1 || rating > 5) throw new Error("Rating must be between 1 and 5");
+  if (!comment || comment.length < 3) throw new Error("Review comment must be at least 3 characters");
+  if (comment.length > 2000) throw new Error("Review comment must not exceed 2000 characters");
+
+  const existing = await getCustomerProductReview(input.productId, email);
+
+  if (existing) {
+    try {
+      await db
+        .update(productReviews)
+        .set({
+          customerName: name,
+          rating,
+          comment,
+          updatedAt: new Date(),
+        })
+        .where(eq(productReviews.id, existing.id));
+
+      const updated = await db
+        .select()
+        .from(productReviews)
+        .where(eq(productReviews.id, existing.id))
+        .limit(1);
+      return updated[0] ?? { ...existing, customerName: name, rating, comment, updatedAt: new Date() };
+    } catch (error) {
+      console.warn("[ridexd] createOrUpdateReview update error:", error);
+      existing.customerName = name;
+      existing.rating = rating;
+      existing.comment = comment;
+      existing.updatedAt = new Date();
+      return existing;
+    }
+  } else {
+    try {
+      await db.insert(productReviews).values({
+        productId: input.productId,
+        customerName: name,
+        customerEmail: email,
+        rating,
+        comment,
+        status: "approved",
+      });
+
+      const created = await db
+        .select()
+        .from(productReviews)
+        .where(
+          and(
+            eq(productReviews.productId, input.productId),
+            sql`lower(${productReviews.customerEmail}) = lower(${email})`,
+          ),
+        )
+        .limit(1);
+
+      if (created[0]) return created[0];
+    } catch (error) {
+      console.warn("[ridexd] createOrUpdateReview insert DB error, fallback used:", error);
+    }
+
+    const newRev: ProductReviewRow = {
+      id: Date.now(),
+      productId: input.productId,
+      customerName: name,
+      customerEmail: email,
+      rating,
+      comment,
+      status: "approved",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    FALLBACK_REVIEWS.unshift(newRev);
+    return newRev;
+  }
+}
+
+export async function deleteCustomerReview(id: number, customerEmail: string): Promise<boolean> {
+  const email = customerEmail.trim().toLowerCase();
+  try {
+    await db
+      .delete(productReviews)
+      .where(
+        and(
+          eq(productReviews.id, id),
+          sql`lower(${productReviews.customerEmail}) = lower(${email})`,
+        ),
+      );
+    FALLBACK_REVIEWS = FALLBACK_REVIEWS.filter(
+      (r) => !(r.id === id && r.customerEmail.toLowerCase() === email),
+    );
+    return true;
+  } catch (error) {
+    FALLBACK_REVIEWS = FALLBACK_REVIEWS.filter(
+      (r) => !(r.id === id && r.customerEmail.toLowerCase() === email),
+    );
+    return true;
+  }
+}
+
+export async function listAdminReviews(filters: {
+  productId?: number;
+  status?: string;
+  search?: string;
+  page?: number;
+  pageSize?: number;
+}): Promise<{ items: (ProductReviewRow & { productTitle?: string })[]; total: number; page: number; pageSize: number; pageCount: number }> {
+  try {
+    await ensureSeeded();
+    const p = Math.max(1, filters.page ?? 1);
+    const ps = Math.min(100, Math.max(1, filters.pageSize ?? 20));
+
+    const conditions = [];
+    if (typeof filters.productId === "number" && !Number.isNaN(filters.productId)) {
+      conditions.push(eq(productReviews.productId, filters.productId));
+    }
+    if (filters.status && filters.status !== "all") {
+      conditions.push(eq(productReviews.status, filters.status));
+    }
+    if (filters.search) {
+      const needle = `%${filters.search.trim()}%`;
+      const match = (column: AnyColumn) => sql`lower(${column}) like lower(${needle})`;
+      conditions.push(
+        or(
+          match(productReviews.customerName),
+          match(productReviews.customerEmail),
+          match(productReviews.comment),
+        )!,
+      );
+    }
+
+    const where = conditions.length ? and(...conditions) : undefined;
+
+    const rows = await db
+      .select({
+        id: productReviews.id,
+        productId: productReviews.productId,
+        customerName: productReviews.customerName,
+        customerEmail: productReviews.customerEmail,
+        rating: productReviews.rating,
+        comment: productReviews.comment,
+        status: productReviews.status,
+        createdAt: productReviews.createdAt,
+        updatedAt: productReviews.updatedAt,
+        productTitle: products.title,
+      })
+      .from(productReviews)
+      .leftJoin(products, eq(productReviews.productId, products.id))
+      .where(where)
+      .orderBy(desc(productReviews.id))
+      .limit(ps)
+      .offset((p - 1) * ps);
+
+    const [{ value }] = await db.select({ value: count() }).from(productReviews).where(where);
+    const total = Number(value);
+
+    return {
+      items: rows.map((r: { id: number; productId: number; customerName: string; customerEmail: string; rating: number; comment: string; status: string; createdAt: Date; updatedAt: Date; productTitle: string | null }) => ({ ...r, productTitle: r.productTitle ?? undefined })),
+      total,
+      page: p,
+      pageSize: ps,
+      pageCount: Math.max(1, Math.ceil(total / ps)),
+    };
+  } catch (error) {
+    console.warn("[ridexd] listAdminReviews DB error, returning fallback reviews");
+    let items = [...FALLBACK_REVIEWS];
+    if (filters.productId) items = items.filter((r) => r.productId === filters.productId);
+    if (filters.status && filters.status !== "all") items = items.filter((r) => r.status === filters.status);
+    if (filters.search) {
+      const q = filters.search.toLowerCase();
+      items = items.filter(
+        (r) =>
+          r.customerName.toLowerCase().includes(q) ||
+          r.customerEmail.toLowerCase().includes(q) ||
+          r.comment.toLowerCase().includes(q),
+      );
+    }
+    const total = items.length;
+    const paged = items.slice(((filters.page ?? 1) - 1) * (filters.pageSize ?? 20), (filters.page ?? 1) * (filters.pageSize ?? 20));
+    return {
+      items: paged.map((r) => {
+        const prod = FALLBACK_PRODUCTS.find((p) => p.id === r.productId);
+        return { ...r, productTitle: prod?.title };
+      }),
+      total,
+      page: filters.page ?? 1,
+      pageSize: filters.pageSize ?? 20,
+      pageCount: Math.max(1, Math.ceil(total / (filters.pageSize ?? 20))),
+    };
+  }
+}
+
+export async function updateReviewStatus(id: number, status: string): Promise<ProductReviewRow | null> {
+  try {
+    await db.update(productReviews).set({ status, updatedAt: new Date() }).where(eq(productReviews.id, id));
+    const rows = await db.select().from(productReviews).where(eq(productReviews.id, id)).limit(1);
+    return rows[0] ?? null;
+  } catch (error) {
+    const rev = FALLBACK_REVIEWS.find((r) => r.id === id);
+    if (rev) {
+      rev.status = status;
+      rev.updatedAt = new Date();
+      return rev;
+    }
+    return null;
+  }
+}
+
+export async function deleteReviewAdmin(id: number): Promise<boolean> {
+  try {
+    await db.delete(productReviews).where(eq(productReviews.id, id));
+    FALLBACK_REVIEWS = FALLBACK_REVIEWS.filter((r) => r.id !== id);
+    return true;
+  } catch (error) {
+    FALLBACK_REVIEWS = FALLBACK_REVIEWS.filter((r) => r.id !== id);
+    return true;
+  }
+}
+
+export async function getProductRatingMap(
+  productIds: number[],
+): Promise<Record<number, { avg: number; total: number }>> {
+  const result: Record<number, { avg: number; total: number }> = {};
+  if (!productIds.length) return result;
+
+  try {
+    const rows = await db
+      .select({
+        productId: productReviews.productId,
+        avgRating: sql<number>`coalesce(avg(${productReviews.rating}), 0)`,
+        total: count(),
+      })
+      .from(productReviews)
+      .where(
+        and(
+          inArray(productReviews.productId, productIds),
+          eq(productReviews.status, "approved"),
+        ),
+      )
+      .groupBy(productReviews.productId);
+
+    rows.forEach((r: { productId: number; avgRating: number | string; total: number | string }) => {
+      result[r.productId] = {
+        avg: Math.round(Number(r.avgRating) * 10) / 10,
+        total: Number(r.total),
+      };
+    });
+  } catch (error) {
+    FALLBACK_REVIEWS.forEach((r) => {
+      if (r.status === "approved" && productIds.includes(r.productId)) {
+        if (!result[r.productId]) {
+          result[r.productId] = { avg: 0, total: 0 };
+        }
+        const curr = result[r.productId];
+        const newTotal = curr.total + 1;
+        const newAvg = (curr.avg * curr.total + r.rating) / newTotal;
+        result[r.productId] = { avg: Math.round(newAvg * 10) / 10, total: newTotal };
+      }
+    });
+  }
+
+  return result;
+}
+
+export async function hasCustomerPurchasedProduct(
+  customerEmail: string,
+  productId: number,
+): Promise<boolean> {
+  const email = customerEmail.trim().toLowerCase();
+  if (!email) return false;
+
+  try {
+    const rows = await db
+      .select({ id: orders.id })
+      .from(orders)
+      .innerJoin(orderItems, eq(orderItems.orderId, orders.id))
+      .where(
+        and(
+          sql`lower(${orders.email}) = lower(${email})`,
+          eq(orderItems.productId, productId),
+          sql`${orders.status} <> 'cancelled'`,
+        ),
+      )
+      .limit(1);
+
+    return rows.length > 0;
+  } catch {
+    return false;
+  }
+}
+
 

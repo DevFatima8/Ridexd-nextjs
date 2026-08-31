@@ -5,11 +5,11 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: {
-    default: "Ridexd.com — Women, Men, Kids, Bed & Bath Online Store",
+    default: "Ridexd.com — Women, Men, Kids, Accessories, Bed & Bath Online Store",
     template: "%s | Ridexd.com",
   },
   description:
-    "Shop Ridexd.com for women stitched, unstitched & luxury pret, men stitched, unstitched & elegant tailoring, kids wear, plus premium bed and bath textiles. Cash on delivery across Pakistan.",
+    "Shop Ridexd.com for women stitched, unstitched & luxury pret, men stitched, unstitched & elegant tailoring, kids wear, accessories, plus premium bed and bath textiles. Cash on delivery across Pakistan.",
   icons: {
     icon: [
       { url: "/icon.png", type: "image/png" },

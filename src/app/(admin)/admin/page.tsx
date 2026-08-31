@@ -15,9 +15,9 @@ export default async function AdminDashboard() {
     { label: "Orders to fulfil", value: String(stats.orders.pending), sub: "pending confirmation" },
     { label: "Products", value: String(stats.products.total), sub: `${stats.products.active} active` },
     {
-      label: "Inventory value",
-      value: formatPKR(stats.products.inventoryValue),
-      sub: `${stats.products.lowStock} low stock`,
+      label: "Customer reviews",
+      value: `${stats.reviews.avgRating} ★`,
+      sub: `${stats.reviews.total} reviews (${stats.reviews.pending} pending)`,
     },
   ];
 

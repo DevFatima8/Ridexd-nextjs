@@ -5,13 +5,24 @@ import type { ProductRow } from "@/db/schema";
 import { categoryLabel, formatPKR } from "@/lib/catalog";
 import { useCart } from "./cart-provider";
 
-export function ProductCard({ product }: { product: ProductRow }) {
+import { StarRating } from "./star-rating";
+
+export function ProductCard({
+  product,
+  rating,
+}: {
+  product: ProductRow & { avgRating?: number; reviewCount?: number };
+  rating?: { avg: number; total: number };
+}) {
   const { addLine } = useCart();
   const images = product.images ?? [];
   const discount =
     product.compareAtPrice > product.price
       ? Math.round(((product.compareAtPrice - product.price) / product.compareAtPrice) * 100)
       : 0;
+
+  const avgScore = rating?.avg ?? product.avgRating;
+  const totalCount = rating?.total ?? product.reviewCount;
 
   return (
     <div className="group relative flex flex-col">
@@ -82,9 +93,14 @@ export function ProductCard({ product }: { product: ProductRow }) {
       </button>
 
       <div className="mt-3 flex flex-1 flex-col">
-        <p className="text-[10px] tracking-[0.2em] text-gold uppercase">
-          {categoryLabel(product.groupSlug, product.categorySlug)}
-        </p>
+        <div className="flex items-center justify-between gap-2">
+          <p className="text-[10px] tracking-[0.2em] text-gold uppercase">
+            {categoryLabel(product.groupSlug, product.categorySlug)}
+          </p>
+          {typeof avgScore === "number" && avgScore > 0 && typeof totalCount === "number" && totalCount > 0 ? (
+            <StarRating rating={avgScore} size="sm" showScore count={totalCount} />
+          ) : null}
+        </div>
         <Link href={`/product/${product.slug}`} className="mt-1 text-[15px] font-medium hover:text-plum">
           {product.title}
         </Link>
@@ -101,3 +117,4 @@ export function ProductCard({ product }: { product: ProductRow }) {
     </div>
   );
 }
+

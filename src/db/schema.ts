@@ -150,6 +150,29 @@ export const contactMessages = mysqlTable(
   ],
 );
 
+export const productReviews = mysqlTable(
+  "product_reviews",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    productId: int("product_id")
+      .notNull()
+      .references(() => products.id, { onDelete: "cascade" }),
+    customerName: varchar("customer_name", { length: 140 }).notNull(),
+    customerEmail: varchar("customer_email", { length: 160 }).notNull(),
+    rating: int("rating").notNull(),
+    comment: text("comment").notNull(),
+    status: varchar("status", { length: 20 }).notNull().default("approved"),
+    createdAt: datetime("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+    updatedAt: datetime("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+  },
+  (table) => [
+    uniqueIndex("uniq_product_reviews_product_customer").on(table.productId, table.customerEmail),
+    index("idx_product_reviews_product").on(table.productId),
+    index("idx_product_reviews_status").on(table.status),
+    index("idx_product_reviews_customer").on(table.customerEmail),
+  ],
+);
+
 export type CategoryRow = typeof categories.$inferSelect;
 export type ProductRow = typeof products.$inferSelect;
 export type NewProductRow = typeof products.$inferInsert;
@@ -157,4 +180,7 @@ export type OrderRow = typeof orders.$inferSelect;
 export type OrderItemRow = typeof orderItems.$inferSelect;
 export type ContactMessageRow = typeof contactMessages.$inferSelect;
 export type NewContactMessageRow = typeof contactMessages.$inferInsert;
+export type ProductReviewRow = typeof productReviews.$inferSelect;
+export type NewProductReviewRow = typeof productReviews.$inferInsert;
+
 

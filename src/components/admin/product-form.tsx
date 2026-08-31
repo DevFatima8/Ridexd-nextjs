@@ -44,8 +44,14 @@ export function ProductForm({
     status: product?.status ?? "active",
     featured: product?.featured ?? false,
   });
-  const [stockType, setStockType] = useState<"limited" | "unlimited">(
-    product?.stock && product.stock >= 9999 ? "unlimited" : "limited",
+  const [stockType, setStockType] = useState<"limited" | "unlimited" | "out_of_stock">(
+    product
+      ? product.stock === 0
+        ? "out_of_stock"
+        : product.stock >= 9999
+        ? "unlimited"
+        : "limited"
+      : "limited",
   );
   const [images, setImages] = useState<string[]>(product?.images ?? []);
   const [sizes, setSizes] = useState<string[]>(product?.sizes ?? []);
@@ -468,7 +474,7 @@ export function ProductForm({
                 type="button"
                 onClick={() => {
                   setStockType("limited");
-                  if (form.stock >= 9999) update("stock", 10);
+                  if (form.stock >= 9999 || form.stock === 0) update("stock", 10);
                 }}
                 className={`flex-1 rounded border px-3 py-2 text-[12px] font-medium transition ${
                   stockType === "limited"
@@ -492,14 +498,32 @@ export function ProductForm({
               >
                 Unlimited Stock
               </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setStockType("out_of_stock");
+                  update("stock", 0);
+                }}
+                className={`flex-1 rounded border px-3 py-2 text-[12px] font-medium transition ${
+                  stockType === "out_of_stock"
+                    ? "border-[#00a0ac] bg-[#e6f7f8] text-[#0b7c86]"
+                    : "border-[#c9cccf] bg-white hover:bg-[#f4f5f7]"
+                }`}
+              >
+                Out of Stock
+              </button>
             </div>
           </div>
 
           {stockType === "limited" ? (
             <NumberField label="Quantity in stock" value={form.stock} onChange={(v) => update("stock", v)} />
-          ) : (
+          ) : stockType === "unlimited" ? (
             <div className="mt-3 rounded border border-[#e3e5e7] bg-[#fafbfb] p-3 text-[12px] text-[#6d7175]">
               ✓ Product is marked with unlimited stock quantity.
+            </div>
+          ) : (
+            <div className="mt-3 rounded border border-[#e3e5e7] bg-[#fafbfb] p-3 text-[12px] text-[#6d7175]">
+              ✕ Product is marked as out of stock (0 quantity).
             </div>
           )}
 

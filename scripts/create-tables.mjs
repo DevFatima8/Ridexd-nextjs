@@ -105,6 +105,19 @@ async function run() {
           is_read BOOLEAN NOT NULL DEFAULT false,
           created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
         );
+
+        CREATE TABLE IF NOT EXISTS product_reviews (
+          id SERIAL PRIMARY KEY,
+          product_id INT NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+          customer_name VARCHAR(140) NOT NULL,
+          customer_email VARCHAR(160) NOT NULL,
+          rating INT NOT NULL,
+          comment TEXT NOT NULL,
+          status VARCHAR(20) NOT NULL DEFAULT 'approved',
+          created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+          updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+          CONSTRAINT uniq_product_reviews_product_customer UNIQUE (product_id, customer_email)
+        );
       `;
       console.log("Executing PostgreSQL table creation query...");
       await client.query(sql);
