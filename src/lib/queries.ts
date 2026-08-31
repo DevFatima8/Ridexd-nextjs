@@ -235,6 +235,39 @@ export async function ensureSeeded(): Promise<void> {
 
 /* ------------------------------- products -------------------------------- */
 
+export type ProductRowWithSales = ProductRow & { totalSold: number };
+
+export async function getProductsTotalSoldMap(productIds?: number[]): Promise<Map<number, number>> {
+  const map = new Map<number, number>();
+  try {
+    const conditions = [sql`${orders.status} <> 'cancelled'`];
+    if (productIds && productIds.length > 0) {
+      conditions.push(inArray(orderItems.productId, productIds));
+    }
+    const rows = await db
+      .select({
+        productId: orderItems.productId,
+        totalSold: sql<number>`coalesce(sum(${orderItems.quantity}), 0)`,
+      })
+      .from(orderItems)
+      .innerJoin(orders, eq(orderItems.orderId, orders.id))
+      .where(and(...conditions))
+      .groupBy(orderItems.productId);
+
+    for (const row of rows) {
+      map.set(Number(row.productId), Number(row.totalSold || 0));
+    }
+  } catch (error) {
+    console.warn("[ridexd] getProductsTotalSoldMap DB error:", error);
+  }
+  return map;
+}
+
+export async function getProductTotalSold(productId: number): Promise<number> {
+  const map = await getProductsTotalSoldMap([productId]);
+  return map.get(productId) ?? 0;
+}
+
 export type ProductFilters = {
   group?: string;
   category?: string;
@@ -268,7 +301,7 @@ function orderClause(sort?: string) {
 }
 
 export async function listProducts(filters: ProductFilters = {}): Promise<{
-  items: ProductRow[];
+  items: ProductRowWithSales[];
   total: number;
   page: number;
   pageSize: number;
@@ -332,8 +365,15 @@ export async function listProducts(filters: ProductFilters = {}): Promise<{
 
     const [{ value }] = await db.select({ value: count() }).from(products).where(where);
 
+    const productIds = rows.map((p: ProductRow) => p.id);
+    const salesMap = await getProductsTotalSoldMap(productIds);
+    const itemsWithSales: ProductRowWithSales[] = rows.map((p: ProductRow) => ({
+      ...p,
+      totalSold: salesMap.get(p.id) ?? 0,
+    }));
+
     return {
-      items: rows,
+      items: itemsWithSales,
       total: Number(value),
       page,
       pageSize,
@@ -341,29 +381,39 @@ export async function listProducts(filters: ProductFilters = {}): Promise<{
     };
   } catch (error) {
     console.warn("[ridexd] listProducts database query failed, using in-memory catalog fallback");
-    return getFallbackProducts(filters);
+    const fallbackRes = getFallbackProducts(filters);
+    return {
+      ...fallbackRes,
+      items: fallbackRes.items.map((p) => ({ ...p, totalSold: 0 })),
+    };
   }
 }
 
-export async function getProductBySlug(slug: string): Promise<ProductRow | null> {
+export async function getProductBySlug(slug: string): Promise<ProductRowWithSales | null> {
   try {
     await ensureSeeded();
     const rows = await db.select().from(products).where(eq(products.slug, slug)).limit(1);
-    return rows[0] ?? null;
+    if (!rows[0]) return null;
+    const totalSold = await getProductTotalSold(rows[0].id);
+    return { ...rows[0], totalSold };
   } catch (error) {
     console.warn("[ridexd] getProductBySlug DB error, using fallback");
-    return FALLBACK_PRODUCTS.find((p) => p.slug === slug) ?? null;
+    const p = FALLBACK_PRODUCTS.find((p) => p.slug === slug);
+    return p ? { ...p, totalSold: 0 } : null;
   }
 }
 
-export async function getProductById(id: number): Promise<ProductRow | null> {
+export async function getProductById(id: number): Promise<ProductRowWithSales | null> {
   try {
     await ensureSeeded();
     const rows = await db.select().from(products).where(eq(products.id, id)).limit(1);
-    return rows[0] ?? null;
+    if (!rows[0]) return null;
+    const totalSold = await getProductTotalSold(rows[0].id);
+    return { ...rows[0], totalSold };
   } catch (error) {
     console.warn("[ridexd] getProductById DB error, using fallback");
-    return FALLBACK_PRODUCTS.find((p) => p.id === id) ?? null;
+    const p = FALLBACK_PRODUCTS.find((p) => p.id === id);
+    return p ? { ...p, totalSold: 0 } : null;
   }
 }
 
@@ -393,14 +443,19 @@ export async function getRelatedProducts(product: ProductRow, limit = 4): Promis
 }
 
 export async function createProduct(values: NewProductRow) {
-  await db.insert(products).values(values);
+  const stockVal = Math.max(0, Math.floor(Number(values.stock) || 0));
+  await db.insert(products).values({ ...values, stock: stockVal });
   return getProductBySlug(values.slug);
 }
 
 export async function updateProduct(id: number, values: Partial<NewProductRow>) {
+  const patch: Record<string, unknown> = { ...values, updatedAt: new Date() };
+  if (typeof patch.stock !== "undefined") {
+    patch.stock = Math.max(0, Math.floor(Number(patch.stock) || 0));
+  }
   await db
     .update(products)
-    .set({ ...values, updatedAt: new Date() })
+    .set(patch)
     .where(eq(products.id, id));
   return getProductById(id);
 }
@@ -628,6 +683,18 @@ export async function createOrder(payload: CheckoutPayload): Promise<OrderRow> {
 
   if (!lines.length) throw new Error("No valid products in cart");
 
+  // Validate stock availability before creating order
+  for (const line of lines) {
+    if (line.product.stock <= 0) {
+      throw new Error(`"${line.product.title}" is out of stock.`);
+    }
+    if (line.product.stock < line.quantity) {
+      throw new Error(
+        `Only ${line.product.stock} item${line.product.stock === 1 ? "" : "s"} available in stock for "${line.product.title}".`,
+      );
+    }
+  }
+
   const subtotal = lines.reduce((sum, l) => sum + l.lineTotal, 0);
   const shipping = subtotal >= 5000 ? 0 : 250;
   const orderNumber = `RD${Date.now().toString(36).toUpperCase().slice(-6)}${Math.floor(
@@ -673,10 +740,24 @@ export async function createOrder(payload: CheckoutPayload): Promise<OrderRow> {
   );
 
   for (const line of lines) {
-    await db
+    const updateRes = await db
       .update(products)
       .set({ stock: sql`greatest(${products.stock} - ${line.quantity}, 0)` })
-      .where(eq(products.id, line.product.id));
+      .where(and(eq(products.id, line.product.id), gte(products.stock, line.quantity)));
+
+    const affected =
+      Array.isArray(updateRes) && updateRes[0] && typeof (updateRes[0] as any).affectedRows === "number"
+        ? (updateRes[0] as any).affectedRows
+        : 1;
+
+    if (affected === 0) {
+      // Stock was taken concurrently by another user! Rollback created order.
+      await db.delete(orderItems).where(eq(orderItems.orderId, order.id));
+      await db.delete(orders).where(eq(orders.id, order.id));
+      throw new Error(
+        `Only ${line.product.stock} item${line.product.stock === 1 ? "" : "s"} available in stock for "${line.product.title}".`,
+      );
+    }
   }
 
   return order;

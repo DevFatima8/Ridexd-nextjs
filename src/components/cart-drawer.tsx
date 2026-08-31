@@ -49,58 +49,70 @@ export function CartDrawer() {
         ) : (
           <>
             <div className="flex-1 space-y-4 overflow-y-auto px-5 py-4">
-              {lines.map((line) => (
-                <div
-                  key={`${line.productId}-${line.variant}`}
-                  className="flex gap-4 border-b border-sand pb-4"
-                >
-                  {line.image ? (
-                    /* eslint-disable-next-line @next/next/no-img-element */
-                    <img src={line.image} alt={line.title} className="h-28 w-20 rounded object-cover" />
-                  ) : (
-                    <div className="flex h-28 w-20 items-center justify-center rounded bg-sand text-xs text-ink-soft/40">
-                      No img
-                    </div>
-                  )}
-                  <div className="flex-1">
-                    <div className="flex items-start justify-between gap-2">
-                      <Link href={`/product/${line.slug}`} onClick={closeDrawer} className="text-sm font-medium">
-                        {line.title}
-                      </Link>
-                      <button
-                        type="button"
-                        onClick={() => removeLine(line.productId, line.variant)}
-                        className="text-xs text-ink-soft/60 hover:text-plum"
-                      >
-                        Remove
-                      </button>
-                    </div>
-                    <p className="mt-0.5 text-xs text-ink-soft/70">
-                      {line.variant ? `Size: ${line.variant}` : "Standard"}
-                    </p>
-                    <div className="mt-3 flex items-center justify-between">
-                      <div className="flex items-center border border-sand">
+              {lines.map((line) => {
+                const isOutOfStock = typeof line.stock === "number" && line.stock <= 0;
+                const isOverStock = typeof line.stock === "number" && line.quantity > line.stock;
+                return (
+                  <div
+                    key={`${line.productId}-${line.variant}`}
+                    className="flex gap-4 border-b border-sand pb-4"
+                  >
+                    {line.image ? (
+                      /* eslint-disable-next-line @next/next/no-img-element */
+                      <img src={line.image} alt={line.title} className="h-28 w-20 rounded object-cover" />
+                    ) : (
+                      <div className="flex h-28 w-20 items-center justify-center rounded bg-sand text-xs text-ink-soft/40">
+                        No img
+                      </div>
+                    )}
+                    <div className="flex-1">
+                      <div className="flex items-start justify-between gap-2">
+                        <Link href={`/product/${line.slug}`} onClick={closeDrawer} className="text-sm font-medium">
+                          {line.title}
+                        </Link>
                         <button
                           type="button"
-                          className="px-2.5 py-1 text-sm"
-                          onClick={() => setQuantity(line.productId, line.variant, line.quantity - 1)}
+                          onClick={() => removeLine(line.productId, line.variant)}
+                          className="text-xs text-ink-soft/60 hover:text-plum"
                         >
-                          −
-                        </button>
-                        <span className="w-8 text-center text-sm">{line.quantity}</span>
-                        <button
-                          type="button"
-                          className="px-2.5 py-1 text-sm"
-                          onClick={() => setQuantity(line.productId, line.variant, line.quantity + 1)}
-                        >
-                          +
+                          Remove
                         </button>
                       </div>
-                      <p className="text-sm font-semibold">{formatPKR(line.price * line.quantity)}</p>
+                      <p className="mt-0.5 text-xs text-ink-soft/70">
+                        {line.variant ? `Size: ${line.variant}` : "Standard"}
+                      </p>
+                      {isOutOfStock ? (
+                        <p className="mt-1 text-[11px] font-semibold text-red-600">Out of Stock</p>
+                      ) : isOverStock ? (
+                        <p className="mt-1 text-[11px] font-semibold text-amber-700">
+                          Limited Stock
+                        </p>
+                      ) : null}
+                      <div className="mt-3 flex items-center justify-between">
+                        <div className="flex items-center border border-sand">
+                          <button
+                            type="button"
+                            className="px-2.5 py-1 text-sm"
+                            onClick={() => setQuantity(line.productId, line.variant, line.quantity - 1)}
+                          >
+                            −
+                          </button>
+                          <span className="w-8 text-center text-sm">{line.quantity}</span>
+                          <button
+                            type="button"
+                            className="px-2.5 py-1 text-sm disabled:opacity-30"
+                            disabled={typeof line.stock === "number" && line.quantity >= line.stock}
+                            onClick={() => setQuantity(line.productId, line.variant, line.quantity + 1)}
+                          >
+                            +
+                          </button>
+                        </div>
+                        <p className="text-sm font-semibold">{formatPKR(line.price * line.quantity)}</p>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
             <div className="border-t border-sand px-5 py-4">

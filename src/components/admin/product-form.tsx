@@ -5,6 +5,7 @@ import { useRef, useState } from "react";
 import { useConfirm } from "@/components/confirm-provider";
 import type { ProductRow } from "@/db/schema";
 import { GROUPS, MAX_PRODUCT_IMAGES } from "@/lib/catalog";
+import { getAdminStockBadge } from "@/lib/stock";
 
 const SIZE_PRESETS = [
   "XS", "S", "M", "L", "XL", "XXL",
@@ -19,7 +20,7 @@ export function ProductForm({
   product,
   categories,
 }: {
-  product?: ProductRow;
+  product?: ProductRow & { totalSold?: number };
   categories: CategoryOption[];
 }) {
   const router = useRouter();
@@ -44,15 +45,6 @@ export function ProductForm({
     status: product?.status ?? "active",
     featured: product?.featured ?? false,
   });
-  const [stockType, setStockType] = useState<"limited" | "unlimited" | "out_of_stock">(
-    product
-      ? product.stock === 0
-        ? "out_of_stock"
-        : product.stock >= 9999
-        ? "unlimited"
-        : "limited"
-      : "limited",
-  );
   const [images, setImages] = useState<string[]>(product?.images ?? []);
   const [sizes, setSizes] = useState<string[]>(product?.sizes ?? []);
   const [imageInput, setImageInput] = useState("");
@@ -466,66 +458,52 @@ export function ProductForm({
         </section>
 
         <section className="rounded-lg border border-[#e3e5e7] bg-white p-5">
-          <p className="text-[13px] font-semibold">Inventory</p>
-          <div className="mt-3">
-            <p className="text-[12px] text-[#6d7175]">Stock policy</p>
-            <div className="mt-2 flex gap-2">
-              <button
-                type="button"
-                onClick={() => {
-                  setStockType("limited");
-                  if (form.stock >= 9999 || form.stock === 0) update("stock", 10);
-                }}
-                className={`flex-1 rounded border px-3 py-2 text-[12px] font-medium transition ${
-                  stockType === "limited"
-                    ? "border-[#00a0ac] bg-[#e6f7f8] text-[#0b7c86]"
-                    : "border-[#c9cccf] bg-white hover:bg-[#f4f5f7]"
-                }`}
-              >
-                Limited Stock
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setStockType("unlimited");
-                  update("stock", 9999);
-                }}
-                className={`flex-1 rounded border px-3 py-2 text-[12px] font-medium transition ${
-                  stockType === "unlimited"
-                    ? "border-[#00a0ac] bg-[#e6f7f8] text-[#0b7c86]"
-                    : "border-[#c9cccf] bg-white hover:bg-[#f4f5f7]"
-                }`}
-              >
-                Unlimited Stock
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setStockType("out_of_stock");
-                  update("stock", 0);
-                }}
-                className={`flex-1 rounded border px-3 py-2 text-[12px] font-medium transition ${
-                  stockType === "out_of_stock"
-                    ? "border-[#00a0ac] bg-[#e6f7f8] text-[#0b7c86]"
-                    : "border-[#c9cccf] bg-white hover:bg-[#f4f5f7]"
-                }`}
-              >
-                Out of Stock
-              </button>
-            </div>
+          <div className="flex items-center justify-between">
+            <p className="text-[13px] font-semibold">Inventory</p>
+            {editing && typeof product?.totalSold === "number" && (
+              <span className="text-[12px] font-medium text-[#6d7175]">
+                Total Sold: <strong className="text-[#202223]">{product.totalSold}</strong>
+              </span>
+            )}
           </div>
 
-          {stockType === "limited" ? (
-            <NumberField label="Quantity in stock" value={form.stock} onChange={(v) => update("stock", v)} />
-          ) : stockType === "unlimited" ? (
-            <div className="mt-3 rounded border border-[#e3e5e7] bg-[#fafbfb] p-3 text-[12px] text-[#6d7175]">
-              ✓ Product is marked with unlimited stock quantity.
-            </div>
-          ) : (
-            <div className="mt-3 rounded border border-[#e3e5e7] bg-[#fafbfb] p-3 text-[12px] text-[#6d7175]">
-              ✕ Product is marked as out of stock (0 quantity).
-            </div>
-          )}
+          <div className="mt-3">
+            <label className="block text-[12px] text-[#6d7175]">
+              Stock Quantity
+              <div className="mt-1.5 flex items-center gap-2">
+                <input
+                  type="number"
+                  min={0}
+                  required
+                  value={form.stock}
+                  onChange={(e) => {
+                    const raw = parseInt(e.target.value || "0", 10);
+                    update("stock", Number.isNaN(raw) ? 0 : Math.max(0, raw));
+                  }}
+                  className="w-full rounded border border-[#c9cccf] px-3 py-2 text-[13px] font-medium outline-none focus:border-[#00a0ac]"
+                  placeholder="Enter available stock quantity"
+                />
+                {(() => {
+                  const badge = getAdminStockBadge(form.stock);
+                  return (
+                    <div className={`inline-flex shrink-0 items-center gap-1.5 rounded px-2.5 py-1 text-[11px] font-semibold ${badge.badgeClass}`}>
+                      {badge.status}
+                    </div>
+                  );
+                })()}
+              </div>
+            </label>
+            <p className="mt-2 text-[11px] text-[#8c9196]">
+              Status Preview:{" "}
+              {form.stock > 10 ? (
+                <span className="font-semibold text-[#107f5a]">In Stock (&gt; 10 items)</span>
+              ) : form.stock >= 1 ? (
+                <span className="font-semibold text-[#b76e00]">Limited Stock (1–10 items)</span>
+              ) : (
+                <span className="font-semibold text-[#d72c0d]">Out of Stock (0 items)</span>
+              )}
+            </p>
+          </div>
 
           <TextField label="SKU" value={form.sku} onChange={(v) => update("sku", v)} />
         </section>

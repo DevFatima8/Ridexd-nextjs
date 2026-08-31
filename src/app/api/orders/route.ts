@@ -44,9 +44,15 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ ok: true, orderNumber: order.orderNumber, order }, { status: 201 });
   } catch (error) {
+    const message = error instanceof Error ? error.message : "Order failed";
+    const isValidationError =
+      message.includes("stock") ||
+      message.includes("empty") ||
+      message.includes("required") ||
+      message.includes("valid products");
     return NextResponse.json(
-      { ok: false, error: error instanceof Error ? error.message : "Order failed" },
-      { status: 500 },
+      { ok: false, error: message },
+      { status: isValidationError ? 400 : 500 },
     );
   }
 }

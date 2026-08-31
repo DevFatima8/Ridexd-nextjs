@@ -156,25 +156,36 @@ export default function CheckoutPage() {
           <aside className="h-fit rounded-2xl border border-sand bg-cream p-6">
             <p className="text-[11px] tracking-[0.24em] uppercase">Order summary</p>
             <div className="mt-5 space-y-4">
-              {lines.map((line) => (
-                <div key={`${line.productId}-${line.variant}`} className="flex gap-3">
-                  {line.image ? (
-                    /* eslint-disable-next-line @next/next/no-img-element */
-                    <img src={line.image} alt={line.title} className="h-20 w-16 rounded object-cover" />
-                  ) : (
-                    <div className="flex h-20 w-16 items-center justify-center rounded bg-sand text-xs text-ink-soft/40">
-                      No img
+              {lines.map((line) => {
+                const isOutOfStock = typeof line.stock === "number" && line.stock <= 0;
+                const isOverStock = typeof line.stock === "number" && line.quantity > line.stock;
+                return (
+                  <div key={`${line.productId}-${line.variant}`} className="flex gap-3">
+                    {line.image ? (
+                      /* eslint-disable-next-line @next/next/no-img-element */
+                      <img src={line.image} alt={line.title} className="h-20 w-16 rounded object-cover" />
+                    ) : (
+                      <div className="flex h-20 w-16 items-center justify-center rounded bg-sand text-xs text-ink-soft/40">
+                        No img
+                      </div>
+                    )}
+                    <div className="flex-1 text-sm">
+                      <p className="font-medium">{line.title}</p>
+                      <p className="text-xs text-ink-soft/70">
+                        {line.variant ? `${line.variant} · ` : ""}Qty {line.quantity}
+                      </p>
+                      {isOutOfStock ? (
+                        <p className="mt-1 text-[11px] font-semibold text-red-600">Out of Stock</p>
+                      ) : isOverStock ? (
+                        <p className="mt-1 text-[11px] font-semibold text-amber-700">
+                          Limited Stock
+                        </p>
+                      ) : null}
                     </div>
-                  )}
-                  <div className="flex-1 text-sm">
-                    <p className="font-medium">{line.title}</p>
-                    <p className="text-xs text-ink-soft/70">
-                      {line.variant ? `${line.variant} · ` : ""}Qty {line.quantity}
-                    </p>
+                    <p className="text-sm font-semibold">{formatPKR(line.price * line.quantity)}</p>
                   </div>
-                  <p className="text-sm font-semibold">{formatPKR(line.price * line.quantity)}</p>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
             <div className="mt-6 space-y-3 border-t border-sand pt-4 text-sm">
@@ -192,7 +203,12 @@ export default function CheckoutPage() {
               </div>
             </div>
 
-            {message && <p className="mt-4 text-sm text-plum">{message}</p>}
+            {message && (
+              <div className="mt-4 flex items-start gap-2.5 rounded-xl border border-red-200 bg-red-50 p-3.5 text-xs font-semibold text-red-800">
+                <span className="shrink-0 text-sm leading-none">⚠️</span>
+                <span>{message}</span>
+              </div>
+            )}
 
             <button
               type="submit"

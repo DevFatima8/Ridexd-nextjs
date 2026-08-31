@@ -66,16 +66,19 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, [lines, ready]);
 
   const addLine = useCallback((line: Omit<CartLine, "quantity">, quantity = 1) => {
+    if (typeof line.stock === "number" && line.stock <= 0) return;
     setLines((current) => {
       const existing = current.find((l) => l.productId === line.productId && l.variant === line.variant);
+      const stockLimit = typeof line.stock === "number" ? Math.min(line.stock, 20) : 20;
       if (existing) {
         return current.map((l) =>
           l.productId === line.productId && l.variant === line.variant
-            ? { ...l, quantity: Math.min(20, l.quantity + quantity) }
+            ? { ...l, stock: line.stock, quantity: Math.min(stockLimit, l.quantity + quantity) }
             : l,
         );
       }
-      return [...current, { ...line, quantity }];
+      const initialQty = Math.min(stockLimit, Math.max(1, quantity));
+      return [...current, { ...line, quantity: initialQty }];
     });
     setDrawerOpen(true);
   }, []);
@@ -83,11 +86,13 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const setQuantity = useCallback((productId: number, variant: string, quantity: number) => {
     setLines((current) =>
       current
-        .map((l) =>
-          l.productId === productId && l.variant === variant
-            ? { ...l, quantity: Math.max(0, Math.min(20, quantity)) }
-            : l,
-        )
+        .map((l) => {
+          if (l.productId === productId && l.variant === variant) {
+            const stockLimit = typeof l.stock === "number" ? Math.min(l.stock, 20) : 20;
+            return { ...l, quantity: Math.max(0, Math.min(stockLimit, quantity)) };
+          }
+          return l;
+        })
         .filter((l) => l.quantity > 0),
     );
   }, []);
@@ -119,8 +124,24 @@ export function CartProvider({ children }: { children: ReactNode }) {
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 }
 
+const defaultCartValue: CartContextValue = {
+  lines: [],
+  ready: false,
+  count: 0,
+  subtotal: 0,
+  drawerOpen: false,
+  openDrawer: () => {},
+  closeDrawer: () => {},
+  addLine: () => {},
+  setQuantity: () => {},
+  removeLine: () => {},
+  clear: () => {},
+};
+
 export function useCart(): CartContextValue {
   const ctx = useContext(CartContext);
-  if (!ctx) throw new Error("useCart must be used inside CartProvider");
+  if (!ctx) {
+    return defaultCartValue;
+  }
   return ctx;
 }
