@@ -99,6 +99,23 @@ CREATE TABLE IF NOT EXISTS `contact_messages` (
   KEY `idx_contact_messages_created` (`created_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE IF NOT EXISTS `product_reviews` (
+  `id`             INT AUTO_INCREMENT PRIMARY KEY,
+  `product_id`     INT          NOT NULL,
+  `customer_name`  VARCHAR(140) NOT NULL,
+  `customer_email` VARCHAR(160) NOT NULL,
+  `rating`         INT          NOT NULL,
+  `comment`        TEXT         NOT NULL,
+  `status`         VARCHAR(20)  NOT NULL DEFAULT 'approved',
+  `created_at`     TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at`     TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  UNIQUE KEY `uniq_product_reviews_product_customer` (`product_id`, `customer_email`),
+  KEY `idx_product_reviews_product` (`product_id`),
+  KEY `idx_product_reviews_status` (`status`),
+  KEY `idx_product_reviews_customer` (`customer_email`),
+  CONSTRAINT `fk_reviews_product` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 SET FOREIGN_KEY_CHECKS = 1;
 
 -- ---------------------------------------------------------------------

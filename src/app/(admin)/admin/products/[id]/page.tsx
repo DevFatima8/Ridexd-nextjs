@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
+import { AdminReviewsSection } from "@/components/admin/admin-reviews-section";
 import { ProductForm } from "@/components/admin/product-form";
 import { isAdmin } from "@/lib/auth";
 import { getCategoryOverview, getProductById } from "@/lib/queries";
@@ -38,6 +39,8 @@ export default async function EditProductPage({ params }: { params: Params }) {
         </Link>
       </div>
       <ProductForm product={product} categories={categories} />
+      <AdminReviewsSection productId={product.id} />
     </div>
   );
 }
+

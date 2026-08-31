@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import { AddToCart } from "@/components/add-to-cart";
 import { ProductCard } from "@/components/product-card";
 import { ProductGallery } from "@/components/product-gallery";
+import { ProductReviews } from "@/components/product-reviews";
 import { GROUP_MAP, categoryLabel, formatPKR } from "@/lib/catalog";
 import { getProductBySlug, getRelatedProducts } from "@/lib/queries";
 
@@ -116,6 +117,8 @@ export default async function ProductPage({ params }: { params: Params }) {
         </div>
       </div>
 
+      <ProductReviews productId={product.id} productTitle={product.title} />
+
       {related.length > 0 && (
         <section className="mt-24">
           <h2 className="font-display text-3xl">You may also like</h2>
@@ -129,3 +132,4 @@ export default async function ProductPage({ params }: { params: Params }) {
     </div>
   );
 }
+

@@ -101,6 +101,24 @@ export const contactMessages = pgTable("contact_messages", {
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
+export const productReviews = pgTable(
+  "product_reviews",
+  {
+    id: serial("id").primaryKey(),
+    productId: integer("product_id").notNull(),
+    customerName: varchar("customer_name", { length: 140 }).notNull(),
+    customerEmail: varchar("customer_email", { length: 160 }).notNull(),
+    rating: integer("rating").notNull(),
+    comment: text("comment").notNull(),
+    status: varchar("status", { length: 20 }).notNull().default("approved"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("uniq_product_reviews_product_customer").on(table.productId, table.customerEmail),
+  ],
+);
+
 export type CategoryRow = typeof categories.$inferSelect;
 export type ProductRow = typeof products.$inferSelect;
 export type NewProductRow = typeof products.$inferInsert;
@@ -108,4 +126,7 @@ export type OrderRow = typeof orders.$inferSelect;
 export type OrderItemRow = typeof orderItems.$inferSelect;
 export type ContactMessageRow = typeof contactMessages.$inferSelect;
 export type NewContactMessageRow = typeof contactMessages.$inferInsert;
+export type ProductReviewRow = typeof productReviews.$inferSelect;
+export type NewProductReviewRow = typeof productReviews.$inferInsert;
+
 

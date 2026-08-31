@@ -63,6 +63,17 @@ const HERO_SLIDES: HeroSlide[] = [
     cta: "Shop bath",
     ctaSecondary: "Shop all",
   },
+  {
+    key: "accessories",
+    label: "Accessories",
+    title: "Handcrafted bags, jewellery & footwear",
+    copy: "Luxury leather handbags, statement kundan jewellery, silk scarves, handcrafted khussas and stylish eyewear.",
+    image:
+      "https://images.pexels.com/photos/1152077/pexels-photo-1152077.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1200&w=1900",
+    href: "/collections/accessories",
+    cta: "Shop accessories",
+    ctaSecondary: "Shop all",
+  },
 ];
 
 export default async function HomePage() {
