@@ -38,9 +38,9 @@ function getFallbackProducts(filters: ProductFilters = {}) {
 
   let items = [...FALLBACK_PRODUCTS];
 
-  const statusFilter = filters.status ?? "active";
-  if (statusFilter !== "all") {
-    items = items.filter((p) => p.status === statusFilter);
+  const targetStatus = filters.status || "active";
+  if (targetStatus !== "all") {
+    items = items.filter((p) => p.status === targetStatus);
   }
   if (filters.group && filters.group !== "all") {
     items = items.filter((p) => p.groupSlug === filters.group);
@@ -110,15 +110,16 @@ function getFallbackProducts(filters: ProductFilters = {}) {
   };
 }
 
-function getFallbackCategories(group?: string): CategoryWithCount[] {
+function getFallbackCategories(group?: string, status = "active"): CategoryWithCount[] {
+  const activeProducts = FALLBACK_PRODUCTS.filter((p) => status === "all" || p.status === status);
   return CATEGORIES.filter((c) => !group || c.group === group).map((c, i) => {
     let count = 0;
     if (c.parentSlug) {
-      count = FALLBACK_PRODUCTS.filter(
-        (p) => p.status === "active" && p.groupSlug === c.group && p.subcategorySlug === c.slug,
+      count = activeProducts.filter(
+        (p) => p.groupSlug === c.group && p.subcategorySlug === c.slug,
       ).length;
     } else {
-      count = FALLBACK_PRODUCTS.filter(
+      count = activeProducts.filter(
         (p) =>
           p.status === "active" &&
           p.groupSlug === c.group &&
@@ -138,9 +139,9 @@ function getFallbackCategories(group?: string): CategoryWithCount[] {
   });
 }
 
-function getFallbackGroupCounts(): Record<string, number> {
+function getFallbackGroupCounts(status = "active"): Record<string, number> {
   const out: Record<string, number> = {};
-  FALLBACK_PRODUCTS.filter((p) => p.status === "active").forEach((p) => {
+  FALLBACK_PRODUCTS.filter((p) => status === "all" || p.status === status).forEach((p) => {
     out[p.groupSlug] = (out[p.groupSlug] ?? 0) + 1;
   });
   return out;
@@ -315,9 +316,9 @@ export async function listProducts(filters: ProductFilters = {}): Promise<{
     const pageSize = Math.min(60, Math.max(4, filters.pageSize ?? 12));
 
     const conditions = [];
-    const statusFilter = filters.status ?? "active";
-    if (statusFilter !== "all") {
-      conditions.push(eq(products.status, statusFilter));
+    const targetStatus = filters.status || "active";
+    if (targetStatus !== "all") {
+      conditions.push(eq(products.status, targetStatus));
     }
     if (filters.group && filters.group !== "all") {
       conditions.push(eq(products.groupSlug, filters.group));
@@ -392,17 +393,20 @@ export async function listProducts(filters: ProductFilters = {}): Promise<{
   }
 }
 
-export async function getProductBySlug(slug: string): Promise<ProductRowWithSales | null> {
+export async function getProductBySlug(slug: string, includeInactive = false): Promise<ProductRowWithSales | null> {
   try {
     await ensureSeeded();
     const rows = await db.select().from(products).where(eq(products.slug, slug)).limit(1);
     if (!rows[0]) return null;
+    if (!includeInactive && rows[0].status !== "active") return null;
     const totalSold = await getProductTotalSold(rows[0].id);
     return { ...rows[0], totalSold };
   } catch (error) {
     console.warn("[ridexd] getProductBySlug DB error, using fallback");
     const p = FALLBACK_PRODUCTS.find((p) => p.slug === slug);
-    return p ? { ...p, totalSold: 0 } : null;
+    if (!p) return null;
+    if (!includeInactive && p.status !== "active") return null;
+    return { ...p, totalSold: 0 };
   }
 }
 
@@ -467,20 +471,21 @@ export async function deleteProduct(id: number) {
   await db.delete(products).where(eq(products.id, id));
 }
 
-export async function getGroupCounts(): Promise<Record<string, number>> {
+export async function getGroupCounts(status = "active"): Promise<Record<string, number>> {
   try {
     await ensureSeeded();
+    const whereClause = status && status !== "all" ? eq(products.status, status) : undefined;
     const rows = await db
       .select({ groupSlug: products.groupSlug, value: count() })
       .from(products)
-      .where(eq(products.status, "active"))
+      .where(whereClause)
       .groupBy(products.groupSlug);
     const out: Record<string, number> = {};
     rows.forEach((r: { groupSlug: string; value: number | string }) => (out[r.groupSlug] = Number(r.value)));
     return out;
   } catch (error) {
     console.warn("[ridexd] getGroupCounts DB error, using fallback");
-    return getFallbackGroupCounts();
+    return getFallbackGroupCounts(status);
   }
 }
 
@@ -502,7 +507,7 @@ export type CategoryWithCount = {
  * instantly shows up in the storefront navigation, collection pages, filters
  * and the product form.
  */
-export async function getCategoryOverview(group?: string): Promise<CategoryWithCount[]> {
+export async function getCategoryOverview(group?: string, status = "active"): Promise<CategoryWithCount[]> {
   try {
     await ensureSeeded();
     const catRows = await db
@@ -518,6 +523,10 @@ export async function getCategoryOverview(group?: string): Promise<CategoryWithC
       .from(categories)
       .orderBy(asc(categories.sortOrder), asc(categories.id));
 
+    const prodConditions = [];
+    if (status && status !== "all") {
+      prodConditions.push(eq(products.status, status));
+    }
     const prodRows = await db
       .select({
         groupSlug: products.groupSlug,
@@ -525,7 +534,7 @@ export async function getCategoryOverview(group?: string): Promise<CategoryWithC
         subcategorySlug: products.subcategorySlug,
       })
       .from(products)
-      .where(eq(products.status, "active"));
+      .where(prodConditions.length ? and(...prodConditions) : undefined);
 
     return catRows
       .filter((cat: { groupSlug: string }) => !group || cat.groupSlug === group)

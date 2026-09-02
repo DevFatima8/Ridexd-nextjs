@@ -24,7 +24,7 @@ export default async function AdminProductsPage({ searchParams }: { searchParams
   const status = pick(params, "status") || "all";
   const page = Math.max(1, Number(pick(params, "page") || 1));
 
-  const categories = await getCategoryOverview(group !== "all" ? group : undefined);
+  const categories = await getCategoryOverview(group !== "all" ? group : undefined, "all");
 
   const result = await listProducts({
     q,
@@ -103,6 +103,8 @@ export default async function AdminProductsPage({ searchParams }: { searchParams
                 </option>
               ))}
             </select>
+          ) : (
+            <div className="hidden md:block" />
           )}
           <select
             name="status"
@@ -110,8 +112,8 @@ export default async function AdminProductsPage({ searchParams }: { searchParams
             className="rounded border border-[#c9cccf] px-3 py-2 text-[13px]"
           >
             <option value="all">All statuses</option>
-            <option value="active">Active (Visible on web)</option>
-            <option value="inactive">Inactive (Hidden from web)</option>
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
           </select>
           <button
             type="submit"
@@ -128,7 +130,7 @@ export default async function AdminProductsPage({ searchParams }: { searchParams
             <tr>
               <th className="px-4 py-3">Product</th>
               <th className="px-3 py-3">Department</th>
-              <th className="px-3 py-3">Web Status</th>
+              <th className="px-3 py-3">Status</th>
               <th className="px-3 py-3 text-right">Stock</th>
               <th className="px-3 py-3">Stock Status</th>
               <th className="px-3 py-3 text-right">Sold</th>
@@ -170,7 +172,7 @@ export default async function AdminProductsPage({ searchParams }: { searchParams
                     </p>
                   </td>
                   <td className="px-3 py-3">
-                    <ProductStatusToggle id={product.id} initialStatus={product.status} />
+                    <ProductStatusToggle id={product.id} status={product.status} />
                   </td>
                   <td className="px-3 py-3 text-right font-medium">{product.stock}</td>
                   <td className="px-3 py-3">
@@ -188,7 +190,7 @@ export default async function AdminProductsPage({ searchParams }: { searchParams
             })}
             {result.items.length === 0 && (
               <tr>
-                <td colSpan={7} className="px-4 py-12 text-center text-[#8c9196]">
+                <td colSpan={8} className="px-4 py-12 text-center text-[#8c9196]">
                   No products match these filters.
                 </td>
               </tr>

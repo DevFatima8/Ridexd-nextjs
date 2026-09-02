@@ -356,23 +356,9 @@ export function ProductForm({
 
       <div className="space-y-4">
         <section className="rounded-lg border border-[#e3e5e7] bg-white p-5">
-          <div className="flex items-center justify-between">
-            <p className="text-[13px] font-semibold">Web Visibility Status</p>
-            <span
-              className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold ${
-                form.status === "active"
-                  ? "bg-[#e6f4ea] text-[#137333]"
-                  : "bg-[#f1f3f4] text-[#5f6368]"
-              }`}
-            >
-              {form.status === "active" ? "● Visible on Store" : "○ Hidden from Store"}
-            </span>
-          </div>
-          <div className="mt-3 grid grid-cols-2 gap-2">
-            {[
-              { key: "active", label: "Active", sub: "Shown on web" },
-              { key: "inactive", label: "Inactive", sub: "Hidden from web" },
-            ].map((opt) => (
+          <p className="text-[13px] font-semibold">Status</p>
+          <div className="mt-3 flex gap-2">
+            {["active", "inactive"].map((option) => (
               <button
                 key={opt.key}
                 type="button"

@@ -11,6 +11,7 @@ export function SiteHeader({ categories = [] }: { categories?: CategoryWithCount
   const { count, openDrawer } = useCart();
   const [openMenu, setOpenMenu] = useState<string | null>(null);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [expandedGroup, setExpandedGroup] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [scrolled, setScrolled] = useState(false);
   const router = useRouter();
@@ -37,43 +38,64 @@ export function SiteHeader({ categories = [] }: { categories?: CategoryWithCount
   function submitSearch(event: React.FormEvent) {
     event.preventDefault();
     const term = query.trim();
+    if (mobileOpen) setMobileOpen(false);
     router.push(term ? `/shop?q=${encodeURIComponent(term)}` : "/shop");
   }
 
   return (
     <header className="sticky top-0 z-50">
+      {/* Announcement Bar */}
       <div className="bg-ink text-cream">
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-2 text-[11px] tracking-[0.18em] uppercase">
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-2 text-[10px] sm:text-[11px] tracking-[0.18em] uppercase">
           <p className="hidden sm:block">Free delivery on orders above PKR 5,000</p>
           <p className="sm:hidden">Free delivery above PKR 5,000</p>
           <div className="flex items-center gap-4">
-            <Link href="/contact" className="hover:text-gold-soft">Contact</Link>
-            <Link href="/track" className="hover:text-gold-soft">Track order</Link>
+            <Link href="/contact" className="transition-colors hover:text-gold-soft">Contact</Link>
+            <Link href="/track" className="transition-colors hover:text-gold-soft">Track order</Link>
           </div>
         </div>
       </div>
 
+      {/* Main Navigation Bar */}
       <div
-        className={`border-b border-sand bg-white/95 backdrop-blur transition-shadow ${scrolled ? "shadow-[0_8px_30px_rgba(16,19,25,0.08)]" : ""
-          }`}
+        className={`border-b border-sand bg-white/95 backdrop-blur-md transition-all duration-300 ${
+          scrolled ? "shadow-[0_8px_30px_rgba(16,19,25,0.08)] py-1.5" : "py-2"
+        }`}
       >
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-2">
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
+          {/* Mobile Menu Toggle Button */}
           <button
             type="button"
-            aria-label="Open menu"
-            className="lg:hidden"
+            aria-label={mobileOpen ? "Close menu" : "Open menu"}
+            aria-expanded={mobileOpen}
+            className="flex h-11 w-11 items-center justify-center rounded-lg border border-transparent hover:border-sand lg:hidden"
             onClick={() => setMobileOpen((v) => !v)}
           >
-            <span className="block h-0.5 w-6 bg-ink" />
-            <span className="mt-1.5 block h-0.5 w-6 bg-ink" />
-            <span className="mt-1.5 block h-0.5 w-4 bg-ink" />
+            <div className="flex flex-col gap-1.5 w-5">
+              <span
+                className={`block h-0.5 w-full bg-ink transition-transform duration-300 ${
+                  mobileOpen ? "translate-y-2 rotate-45" : ""
+                }`}
+              />
+              <span
+                className={`block h-0.5 w-full bg-ink transition-opacity duration-300 ${
+                  mobileOpen ? "opacity-0" : ""
+                }`}
+              />
+              <span
+                className={`block h-0.5 w-full bg-ink transition-transform duration-300 ${
+                  mobileOpen ? "-translate-y-2 -rotate-45" : ""
+                }`}
+              />
+            </div>
           </button>
 
-          <Link href="/" className="flex items-center gap-0 py-0">
+          {/* Brand Logo */}
+          <Link href="/" className="flex items-center gap-0 py-0 group">
             <img
               src="/logo.png"
               alt="Ridexd.com"
-              className="h-12 md:h-14 w-auto object-contain transition-transform hover:scale-105"
+              className="h-10 sm:h-12 md:h-14 w-auto object-contain transition-transform duration-300 group-hover:scale-105"
               style={{
                 filter:
                   "drop-shadow(1px 0 0 #000) drop-shadow(-1px 0 0 #000) drop-shadow(0 1px 0 #000) drop-shadow(0 -1px 0 #000) drop-shadow(0 0 2px rgba(0,0,0,0.5))",
@@ -81,7 +103,8 @@ export function SiteHeader({ categories = [] }: { categories?: CategoryWithCount
             />
           </Link>
 
-          <nav className="hidden items-center gap-7 text-[13px] font-medium tracking-[0.12em] uppercase lg:flex">
+          {/* Desktop Navigation Menu */}
+          <nav className="hidden items-center gap-7 text-[12px] lg:text-[13px] font-semibold tracking-[0.14em] uppercase lg:flex">
             <Link href="/" className="link-underline py-2">Home</Link>
             {GROUPS.map((group) => (
               <div
@@ -94,8 +117,8 @@ export function SiteHeader({ categories = [] }: { categories?: CategoryWithCount
                   {group.name}
                 </Link>
                 {openMenu === group.slug && (
-                  <div className="absolute left-1/2 top-full z-50 w-[680px] -translate-x-1/2 border border-sand bg-white p-6 shadow-[0_20px_60px_rgba(16,19,25,0.14)]">
-                    <p className="mb-4 text-[10px] tracking-[0.28em] text-gold uppercase">{group.tagline}</p>
+                  <div className="absolute left-1/2 top-full z-50 w-[680px] -translate-x-1/2 rounded-xl border border-sand bg-white p-6 shadow-[0_20px_60px_rgba(16,19,25,0.14)] animate-fade-in">
+                    <p className="mb-4 text-[10px] tracking-[0.28em] text-gold uppercase font-semibold">{group.tagline}</p>
                     {catsFor(group.slug).some((c) => c.parentSlug) ? (
                       <div className="grid grid-cols-3 gap-6 text-left">
                         {catsFor(group.slug)
@@ -147,7 +170,7 @@ export function SiteHeader({ categories = [] }: { categories?: CategoryWithCount
                     )}
                     <Link
                       href={`/collections/${group.slug}`}
-                      className="mt-5 inline-block text-[11px] tracking-[0.2em] text-gold uppercase hover:underline"
+                      className="mt-5 inline-block text-[11px] font-semibold tracking-[0.2em] text-gold uppercase hover:underline"
                     >
                       Shop all {group.name} →
                     </Link>
@@ -160,69 +183,123 @@ export function SiteHeader({ categories = [] }: { categories?: CategoryWithCount
             <Link href="/contact" className="link-underline py-2">Contact</Link>
           </nav>
 
+          {/* Search & Shopping Bag */}
           <div className="flex items-center gap-3">
             <form onSubmit={submitSearch} className="hidden items-center md:flex">
-              <input
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search products"
-                className="w-40 rounded-full border border-sand bg-cream px-4 py-2 text-sm outline-none transition-all focus:w-56 focus:border-gold"
-              />
+              <div className="relative">
+                <input
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="Search products..."
+                  className="w-36 rounded-full border border-sand bg-cream px-4 py-2 text-xs text-ink placeholder:text-ink-soft/50 outline-none transition-all duration-300 focus:w-52 focus:border-gold focus:bg-white"
+                />
+              </div>
             </form>
             <button
               type="button"
               onClick={openDrawer}
-              className="relative rounded-full border border-ink px-4 py-2 text-[11px] tracking-[0.2em] uppercase transition hover:bg-ink hover:text-white"
+              className="relative inline-flex items-center justify-center rounded-full border border-ink bg-white px-4 py-2 text-[11px] font-semibold tracking-[0.18em] uppercase transition-all duration-300 hover:bg-ink hover:text-white active:scale-95 shadow-sm"
             >
               Bag
-              <span className="ml-2 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-gold px-1 text-[10px] text-white">
+              <span className="ml-2 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-gold px-1.5 text-[10px] font-bold text-white shadow-xs">
                 {count}
               </span>
             </button>
           </div>
         </div>
+      </div>
 
-        {mobileOpen && (
-          <div className="border-t border-sand bg-white px-4 pb-6 lg:hidden">
-            <form onSubmit={submitSearch} className="py-4">
-              <input
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search products"
-                className="w-full rounded-full border border-sand bg-cream px-4 py-2 text-sm outline-none"
-              />
+      {/* Mobile Drawer Overlay */}
+      {mobileOpen && (
+        <div className="fixed inset-0 z-40 lg:hidden">
+          {/* Backdrop */}
+          <div
+            className="fixed inset-0 bg-ink/50 backdrop-blur-xs transition-opacity duration-300"
+            onClick={() => setMobileOpen(false)}
+          />
+
+          {/* Drawer Menu Panel */}
+          <div className="absolute left-0 top-0 h-full w-4/5 max-w-sm border-r border-sand bg-white shadow-2xl overflow-y-auto px-5 pb-8 pt-20 animate-fade-in">
+            <form onSubmit={submitSearch} className="mb-6">
+              <div className="flex items-center rounded-full border border-sand bg-cream px-4 py-2.5">
+                <input
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="Search products..."
+                  className="w-full bg-transparent text-sm text-ink placeholder:text-ink-soft/50 outline-none"
+                />
+                <button type="submit" className="text-xs text-gold uppercase font-semibold">
+                  Search
+                </button>
+              </div>
             </form>
+
+            {/* Mobile Department Links */}
             <div className="space-y-4">
+              <Link
+                href="/"
+                onClick={() => setMobileOpen(false)}
+                className="block text-sm font-semibold tracking-[0.16em] uppercase text-ink hover:text-gold"
+              >
+                Home
+              </Link>
               {GROUPS.map((group) => (
-                <div key={group.slug}>
-                  <Link href={`/collections/${group.slug}`} className="text-[13px] font-semibold tracking-[0.16em] uppercase">
-                    {group.name}
-                  </Link>
-                  <div className="mt-2 grid grid-cols-2 gap-2">
-                    {catsFor(group.slug)
-                      .filter((c) => !c.parentSlug)
-                      .map((cat) => (
-                        <Link
-                          key={cat.id}
-                          href={`/shop?group=${group.slug}&category=${cat.categorySlug}`}
-                          className="text-sm font-medium text-ink"
-                        >
-                          {cat.name}
-                        </Link>
-                      ))}
+                <div key={group.slug} className="border-b border-sand/60 pb-3">
+                  <div className="flex items-center justify-between">
+                    <Link
+                      href={`/collections/${group.slug}`}
+                      onClick={() => setMobileOpen(false)}
+                      className="text-sm font-semibold tracking-[0.16em] uppercase text-ink hover:text-gold"
+                    >
+                      {group.name}
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={() => setExpandedGroup(expandedGroup === group.slug ? null : group.slug)}
+                      className="px-2 py-1 text-xs text-gold font-bold"
+                    >
+                      {expandedGroup === group.slug ? "−" : "+"}
+                    </button>
                   </div>
+
+                  {expandedGroup === group.slug && (
+                    <div className="mt-2.5 grid grid-cols-2 gap-2 pl-2">
+                      {catsFor(group.slug)
+                        .filter((c) => !c.parentSlug)
+                        .map((cat) => (
+                          <Link
+                            key={cat.id}
+                            href={`/shop?group=${group.slug}&category=${cat.categorySlug}`}
+                            onClick={() => setMobileOpen(false)}
+                            className="text-xs text-ink-soft/80 hover:text-plum py-1"
+                          >
+                            {cat.name}
+                          </Link>
+                        ))}
+                    </div>
+                  )}
                 </div>
               ))}
-              <div className="flex gap-4 border-t border-sand pt-4 text-[13px] tracking-[0.16em] uppercase">
-                <Link href="/shop">Shop all</Link>
-                <Link href="/about">About</Link>
-                <Link href="/contact">Contact</Link>
-                <Link href="/track">Track</Link>
+
+              <div className="space-y-3 pt-3 text-xs tracking-[0.18em] uppercase font-semibold text-ink">
+                <Link href="/shop" onClick={() => setMobileOpen(false)} className="block hover:text-gold">
+                  Shop All Products
+                </Link>
+                <Link href="/about" onClick={() => setMobileOpen(false)} className="block hover:text-gold">
+                  About Us
+                </Link>
+                <Link href="/contact" onClick={() => setMobileOpen(false)} className="block hover:text-gold">
+                  Contact Us
+                </Link>
+                <Link href="/track" onClick={() => setMobileOpen(false)} className="block hover:text-gold">
+                  Track Order
+                </Link>
               </div>
             </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </header>
   );
 }
+
