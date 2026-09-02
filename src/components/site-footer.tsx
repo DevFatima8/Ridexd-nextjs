@@ -6,19 +6,19 @@ export function SiteFooter({ categories = [] }: { categories?: CategoryWithCount
   const departmentGroups = GROUPS.filter((g) => g.slug !== "bed" && g.slug !== "bath");
 
   return (
-    <footer className="mt-20 border-t border-sand bg-ink text-cream">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12 md:py-16">
-        <div className="grid gap-10 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 items-start">
+    <footer className="mt-16 sm:mt-24 border-t border-sand bg-ink text-cream">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-10 sm:py-14 md:py-16">
+        <div className="grid gap-8 sm:gap-10 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 items-start">
           {/* Brand Info & Socials Column */}
           <div className="sm:col-span-2 md:col-span-3 lg:col-span-2 space-y-4">
-            <Link href="/" className="inline-block transition-transform hover:scale-105">
+            <Link href="/" className="inline-block transition-transform duration-300 hover:scale-105">
               <img
                 src="/logo.png"
                 alt="Ridexd.com"
                 className="h-10 md:h-12 w-auto object-contain brightness-110 drop-shadow"
               />
             </Link>
-            <p className="max-w-sm text-xs leading-relaxed text-cream/75">
+            <p className="max-w-sm text-xs leading-relaxed text-cream/80 font-light">
               Ridexd.com is a modern eastern lifestyle store — shalwar kameez for women and men,
               kidswear, luxury accessories and bed &amp; bath textiles, delivered across Pakistan.
             </p>
@@ -34,7 +34,7 @@ export function SiteFooter({ categories = [] }: { categories?: CategoryWithCount
                   target="_blank"
                   rel="noreferrer"
                   aria-label="Instagram"
-                  className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-cream transition-all hover:bg-gold hover:text-white hover:scale-110"
+                  className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-cream transition-all duration-300 hover:bg-gold hover:text-white hover:scale-110 active:scale-95"
                   title="Instagram"
                 >
                   📸
@@ -44,7 +44,7 @@ export function SiteFooter({ categories = [] }: { categories?: CategoryWithCount
                   target="_blank"
                   rel="noreferrer"
                   aria-label="Facebook"
-                  className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-cream transition-all hover:bg-gold hover:text-white hover:scale-110"
+                  className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-cream transition-all duration-300 hover:bg-gold hover:text-white hover:scale-110 active:scale-95"
                   title="Facebook"
                 >
                   📘
@@ -54,7 +54,7 @@ export function SiteFooter({ categories = [] }: { categories?: CategoryWithCount
                   target="_blank"
                   rel="noreferrer"
                   aria-label="TikTok"
-                  className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-cream transition-all hover:bg-gold hover:text-white hover:scale-110"
+                  className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-cream transition-all duration-300 hover:bg-gold hover:text-white hover:scale-110 active:scale-95"
                   title="TikTok"
                 >
                   🎵
@@ -62,7 +62,7 @@ export function SiteFooter({ categories = [] }: { categories?: CategoryWithCount
               </div>
             </div>
 
-            <div className="flex flex-wrap items-center gap-2 pt-2 text-[10px] tracking-[0.2em] text-cream/50 uppercase">
+            <div className="flex flex-wrap items-center gap-2 pt-2 text-[10px] tracking-[0.2em] text-cream/50 uppercase font-medium">
               <span>COD</span>
               <span>·</span>
               <span>Bank transfer</span>
@@ -91,7 +91,7 @@ export function SiteFooter({ categories = [] }: { categories?: CategoryWithCount
                     <li key={cat.id}>
                       <Link
                         href={`/shop?group=${group.slug}&category=${cat.categorySlug}`}
-                        className="transition-colors hover:text-white"
+                        className="transition-colors duration-200 hover:text-white hover:underline"
                       >
                         {cat.name}
                       </Link>
@@ -136,3 +136,4 @@ export function SiteFooter({ categories = [] }: { categories?: CategoryWithCount
     </footer>
   );
 }
+

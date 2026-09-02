@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ProductRowActions } from "@/components/admin/product-row-actions";
+import { ProductStatusToggle } from "@/components/admin/product-status-toggle";
 import { isAdmin } from "@/lib/auth";
 import { GROUPS, categoryLabel, formatPKR } from "@/lib/catalog";
 import { getCategoryOverview, listProducts } from "@/lib/queries";
@@ -23,7 +24,7 @@ export default async function AdminProductsPage({ searchParams }: { searchParams
   const status = pick(params, "status") || "all";
   const page = Math.max(1, Number(pick(params, "page") || 1));
 
-  const categories = await getCategoryOverview(group !== "all" ? group : undefined);
+  const categories = await getCategoryOverview(group !== "all" ? group : undefined, "all");
 
   const result = await listProducts({
     q,
@@ -103,16 +104,7 @@ export default async function AdminProductsPage({ searchParams }: { searchParams
               ))}
             </select>
           ) : (
-            <select
-              name="status"
-              defaultValue={status}
-              className="rounded border border-[#c9cccf] px-3 py-2 text-[13px]"
-            >
-              <option value="all">All statuses</option>
-              <option value="active">Active</option>
-              <option value="draft">Draft</option>
-              <option value="archived">Archived</option>
-            </select>
+            <div className="hidden md:block" />
           )}
           <select
             name="status"
@@ -121,8 +113,7 @@ export default async function AdminProductsPage({ searchParams }: { searchParams
           >
             <option value="all">All statuses</option>
             <option value="active">Active</option>
-            <option value="draft">Draft</option>
-            <option value="archived">Archived</option>
+            <option value="inactive">Inactive</option>
           </select>
           <button
             type="submit"
@@ -139,6 +130,7 @@ export default async function AdminProductsPage({ searchParams }: { searchParams
             <tr>
               <th className="px-4 py-3">Product</th>
               <th className="px-3 py-3">Department</th>
+              <th className="px-3 py-3">Status</th>
               <th className="px-3 py-3 text-right">Stock</th>
               <th className="px-3 py-3">Stock Status</th>
               <th className="px-3 py-3 text-right">Sold</th>
@@ -179,6 +171,9 @@ export default async function AdminProductsPage({ searchParams }: { searchParams
                       {categoryLabel(product.groupSlug, product.categorySlug)}
                     </p>
                   </td>
+                  <td className="px-3 py-3">
+                    <ProductStatusToggle id={product.id} status={product.status} />
+                  </td>
                   <td className="px-3 py-3 text-right font-medium">{product.stock}</td>
                   <td className="px-3 py-3">
                     <span className={`inline-flex items-center rounded px-2.5 py-0.5 text-[11px] font-semibold ${stockBadge.badgeClass}`}>
@@ -195,7 +190,7 @@ export default async function AdminProductsPage({ searchParams }: { searchParams
             })}
             {result.items.length === 0 && (
               <tr>
-                <td colSpan={7} className="px-4 py-12 text-center text-[#8c9196]">
+                <td colSpan={8} className="px-4 py-12 text-center text-[#8c9196]">
                   No products match these filters.
                 </td>
               </tr>

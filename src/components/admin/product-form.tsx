@@ -358,7 +358,7 @@ export function ProductForm({
         <section className="rounded-lg border border-[#e3e5e7] bg-white p-5">
           <p className="text-[13px] font-semibold">Status</p>
           <div className="mt-3 flex gap-2">
-            {["active", "draft", "archived"].map((option) => (
+            {["active", "inactive"].map((option) => (
               <button
                 key={option}
                 type="button"
