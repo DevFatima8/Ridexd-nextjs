@@ -44,7 +44,7 @@ export function HeroBanner({ slides }: { slides: HeroSlide[] }) {
 
   return (
     <section
-      className="relative isolate overflow-hidden bg-ink"
+      className="relative isolate overflow-hidden bg-ink h-[600px] sm:h-[700px] md:h-[780px] lg:h-[850px] flex items-center"
     >
       {slides.map((slide, index) => (
         <div
@@ -54,26 +54,27 @@ export function HeroBanner({ slides }: { slides: HeroSlide[] }) {
             index === active ? "opacity-100" : "pointer-events-none opacity-0"
           }`}
         >
+          {/* Main Hero Background Image - full width & height cover */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={slide.image}
             alt={slide.label}
-            className={`h-full w-full object-cover transition-transform duration-[6000ms] ease-out ${
+            className={`absolute inset-0 h-full w-full object-cover object-center transition-transform duration-[6000ms] ease-out ${
               index === active ? "scale-105" : "scale-100"
             }`}
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-ink/90 via-ink/60 to-ink/20" />
+          <div className="absolute inset-0 bg-gradient-to-r from-ink/90 via-ink/65 to-ink/30 pointer-events-none" />
         </div>
       ))}
 
-      <div className="relative mx-auto flex min-h-[460px] max-w-7xl flex-col justify-center px-4 py-24 text-cream md:min-h-[560px] md:py-32">
+      <div className="relative mx-auto flex h-full w-full max-w-7xl flex-col justify-center px-4 py-16 text-cream">
         {slides.map((slide, index) => (
           <div
             key={`copy-${slide.key}`}
             className={`transition-all duration-700 ${
               index === active
-                ? "relative translate-x-0 opacity-100"
-                : "pointer-events-none absolute inset-x-4 translate-x-6 opacity-0"
+                ? "relative translate-x-0 opacity-100 z-10"
+                : "pointer-events-none absolute inset-x-4 translate-x-6 opacity-0 z-0"
             }`}
           >
             <p className="text-[11px] tracking-luxe text-gold-soft uppercase">

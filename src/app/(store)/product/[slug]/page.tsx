@@ -15,7 +15,7 @@ type Params = Promise<{ slug: string }>;
 export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
   const { slug } = await params;
   const product = await getProductBySlug(slug);
-  if (!product) return { title: "Product not found" };
+  if (!product || product.status !== "active") return { title: "Product not found" };
   return {
     title: product.title,
     description: product.description.slice(0, 160),

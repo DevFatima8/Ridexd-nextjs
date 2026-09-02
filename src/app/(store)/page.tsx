@@ -13,8 +13,7 @@ const HERO_SLIDES: HeroSlide[] = [
     label: "Women",
     title: "Shalwar kameez — stitched, unstitched & luxury pret",
     copy: "Hand embroidery, premium lawn, boski and couture-grade luxury pret shalwar kameez, tailored for every occasion.",
-    image:
-      "https://images.pexels.com/photos/29413661/pexels-photo-29413661.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1400&w=2000",
+    image: "/images/WOMEN.jpg.jpeg",
     href: "/collections/women",
     cta: "Shop women",
     ctaSecondary: "Shop all",
@@ -24,8 +23,7 @@ const HERO_SLIDES: HeroSlide[] = [
     label: "Men",
     title: "Stitched, unstitched & elegant eastern tailoring",
     copy: "Ready-made kurtas, premium wash & wear and boski fabric, plus an elegant line for weddings and evenings.",
-    image:
-      "https://images.pexels.com/photos/28332607/pexels-photo-28332607.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1400&w=2000",
+    image: "/images/MENS%20BURNER%20N.jpg.jpeg",
     href: "/collections/men",
     cta: "Shop men",
     ctaSecondary: "Shop all",
@@ -35,8 +33,7 @@ const HERO_SLIDES: HeroSlide[] = [
     label: "Kids",
     title: "Boys, girls & baby — play-proof everyday outfits",
     copy: "Skin-friendly cotton sets, festive eastern wear, night suits and school uniforms for newborns to 14 years.",
-    image:
-      "https://images.pexels.com/photos/1620759/pexels-photo-1620759.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1400&w=2000",
+    image: "/images/KIDS%20N.jpg.jpeg",
     href: "/collections/kids",
     cta: "Shop kids",
     ctaSecondary: "Shop all",
@@ -46,8 +43,7 @@ const HERO_SLIDES: HeroSlide[] = [
     label: "Bed",
     title: "Hotel-grade bed linen for every season",
     copy: "Percale and sateen sheet sets, featherlight quilts, duvet covers, pillows and waterproof mattress protectors.",
-    image:
-      "https://images.pexels.com/photos/7765000/pexels-photo-7765000.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1200&w=1900",
+    image: "/images/BED.jpg.jpeg",
     href: "/collections/bed",
     cta: "Shop bed",
     ctaSecondary: "Shop all",
@@ -57,29 +53,17 @@ const HERO_SLIDES: HeroSlide[] = [
     label: "Bath",
     title: "Zero-twist towels & spa robes",
     copy: "Zero-twist cotton towels, waffle bathrobes, anti-slip mats, shower curtains and complete bath gift sets.",
-    image:
-      "https://images.pexels.com/photos/20665616/pexels-photo-20665616.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1200&w=1900",
+    image: "/images/BATH.jpg.jpeg",
     href: "/collections/bath",
     cta: "Shop bath",
-    ctaSecondary: "Shop all",
-  },
-  {
-    key: "accessories",
-    label: "Accessories",
-    title: "Handcrafted bags, jewellery & footwear",
-    copy: "Luxury leather handbags, statement kundan jewellery, silk scarves, handcrafted khussas and stylish eyewear.",
-    image:
-      "https://images.pexels.com/photos/1152077/pexels-photo-1152077.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1200&w=1900",
-    href: "/collections/accessories",
-    cta: "Shop accessories",
     ctaSecondary: "Shop all",
   },
 ];
 
 export default async function HomePage() {
   const [featured, arrivals, slider, counts, overview] = await Promise.all([
-    listProducts({ featured: true, pageSize: 8, sort: "newest" }),
-    listProducts({ pageSize: 8, sort: "newest" }),
+    listProducts({ featured: true, pageSize: 8, sort: "newest", status: "active" }),
+    listProducts({ pageSize: 8, sort: "newest", status: "active" }),
     listProducts({ pageSize: 12, sort: "newest", status: "active" }),
     getGroupCounts(),
     getCategoryOverview(),
