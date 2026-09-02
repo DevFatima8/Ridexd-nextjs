@@ -38,8 +38,9 @@ function getFallbackProducts(filters: ProductFilters = {}) {
 
   let items = [...FALLBACK_PRODUCTS];
 
-  if (filters.status && filters.status !== "all") {
-    items = items.filter((p) => p.status === filters.status);
+  const statusFilter = filters.status ?? "active";
+  if (statusFilter !== "all") {
+    items = items.filter((p) => p.status === statusFilter);
   }
   if (filters.group && filters.group !== "all") {
     items = items.filter((p) => p.groupSlug === filters.group);
@@ -114,11 +115,12 @@ function getFallbackCategories(group?: string): CategoryWithCount[] {
     let count = 0;
     if (c.parentSlug) {
       count = FALLBACK_PRODUCTS.filter(
-        (p) => p.groupSlug === c.group && p.subcategorySlug === c.slug,
+        (p) => p.status === "active" && p.groupSlug === c.group && p.subcategorySlug === c.slug,
       ).length;
     } else {
       count = FALLBACK_PRODUCTS.filter(
         (p) =>
+          p.status === "active" &&
           p.groupSlug === c.group &&
           (p.categorySlug === c.slug || p.subcategorySlug.startsWith(`${c.slug}-`)),
       ).length;
@@ -138,7 +140,7 @@ function getFallbackCategories(group?: string): CategoryWithCount[] {
 
 function getFallbackGroupCounts(): Record<string, number> {
   const out: Record<string, number> = {};
-  FALLBACK_PRODUCTS.forEach((p) => {
+  FALLBACK_PRODUCTS.filter((p) => p.status === "active").forEach((p) => {
     out[p.groupSlug] = (out[p.groupSlug] ?? 0) + 1;
   });
   return out;
@@ -313,8 +315,9 @@ export async function listProducts(filters: ProductFilters = {}): Promise<{
     const pageSize = Math.min(60, Math.max(4, filters.pageSize ?? 12));
 
     const conditions = [];
-    if (filters.status && filters.status !== "all") {
-      conditions.push(eq(products.status, filters.status));
+    const statusFilter = filters.status ?? "active";
+    if (statusFilter !== "all") {
+      conditions.push(eq(products.status, statusFilter));
     }
     if (filters.group && filters.group !== "all") {
       conditions.push(eq(products.groupSlug, filters.group));
@@ -470,6 +473,7 @@ export async function getGroupCounts(): Promise<Record<string, number>> {
     const rows = await db
       .select({ groupSlug: products.groupSlug, value: count() })
       .from(products)
+      .where(eq(products.status, "active"))
       .groupBy(products.groupSlug);
     const out: Record<string, number> = {};
     rows.forEach((r: { groupSlug: string; value: number | string }) => (out[r.groupSlug] = Number(r.value)));
@@ -520,7 +524,8 @@ export async function getCategoryOverview(group?: string): Promise<CategoryWithC
         categorySlug: products.categorySlug,
         subcategorySlug: products.subcategorySlug,
       })
-      .from(products);
+      .from(products)
+      .where(eq(products.status, "active"));
 
     return catRows
       .filter((cat: { groupSlug: string }) => !group || cat.groupSlug === group)
@@ -683,8 +688,11 @@ export async function createOrder(payload: CheckoutPayload): Promise<OrderRow> {
 
   if (!lines.length) throw new Error("No valid products in cart");
 
-  // Validate stock availability before creating order
+  // Validate stock availability and status before creating order
   for (const line of lines) {
+    if (line.product.status !== "active") {
+      throw new Error(`"${line.product.title}" is currently inactive and unavailable for purchase.`);
+    }
     if (line.product.stock <= 0) {
       throw new Error(`"${line.product.title}" is out of stock.`);
     }

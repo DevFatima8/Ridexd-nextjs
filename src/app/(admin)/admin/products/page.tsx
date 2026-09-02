@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ProductRowActions } from "@/components/admin/product-row-actions";
+import { ProductStatusToggle } from "@/components/admin/product-status-toggle";
 import { isAdmin } from "@/lib/auth";
 import { GROUPS, categoryLabel, formatPKR } from "@/lib/catalog";
 import { getCategoryOverview, listProducts } from "@/lib/queries";
@@ -89,7 +90,7 @@ export default async function AdminProductsPage({ searchParams }: { searchParams
               </option>
             ))}
           </select>
-          {categoryOptions.length > 0 ? (
+          {categoryOptions.length > 0 && (
             <select
               name="category"
               defaultValue={activeCategory}
@@ -102,17 +103,6 @@ export default async function AdminProductsPage({ searchParams }: { searchParams
                 </option>
               ))}
             </select>
-          ) : (
-            <select
-              name="status"
-              defaultValue={status}
-              className="rounded border border-[#c9cccf] px-3 py-2 text-[13px]"
-            >
-              <option value="all">All statuses</option>
-              <option value="active">Active</option>
-              <option value="draft">Draft</option>
-              <option value="archived">Archived</option>
-            </select>
           )}
           <select
             name="status"
@@ -120,9 +110,8 @@ export default async function AdminProductsPage({ searchParams }: { searchParams
             className="rounded border border-[#c9cccf] px-3 py-2 text-[13px]"
           >
             <option value="all">All statuses</option>
-            <option value="active">Active</option>
-            <option value="draft">Draft</option>
-            <option value="archived">Archived</option>
+            <option value="active">Active (Visible on web)</option>
+            <option value="inactive">Inactive (Hidden from web)</option>
           </select>
           <button
             type="submit"
@@ -139,6 +128,7 @@ export default async function AdminProductsPage({ searchParams }: { searchParams
             <tr>
               <th className="px-4 py-3">Product</th>
               <th className="px-3 py-3">Department</th>
+              <th className="px-3 py-3">Web Status</th>
               <th className="px-3 py-3 text-right">Stock</th>
               <th className="px-3 py-3">Stock Status</th>
               <th className="px-3 py-3 text-right">Sold</th>
@@ -178,6 +168,9 @@ export default async function AdminProductsPage({ searchParams }: { searchParams
                     <p className="text-[11px] text-[#8c9196]">
                       {categoryLabel(product.groupSlug, product.categorySlug)}
                     </p>
+                  </td>
+                  <td className="px-3 py-3">
+                    <ProductStatusToggle id={product.id} initialStatus={product.status} />
                   </td>
                   <td className="px-3 py-3 text-right font-medium">{product.stock}</td>
                   <td className="px-3 py-3">
