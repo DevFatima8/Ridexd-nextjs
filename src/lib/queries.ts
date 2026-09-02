@@ -121,6 +121,7 @@ function getFallbackCategories(group?: string, status = "active"): CategoryWithC
     } else {
       count = activeProducts.filter(
         (p) =>
+          p.status === "active" &&
           p.groupSlug === c.group &&
           (p.categorySlug === c.slug || p.subcategorySlug.startsWith(`${c.slug}-`)),
       ).length;
@@ -696,8 +697,11 @@ export async function createOrder(payload: CheckoutPayload): Promise<OrderRow> {
 
   if (!lines.length) throw new Error("No valid products in cart");
 
-  // Validate stock availability before creating order
+  // Validate stock availability and status before creating order
   for (const line of lines) {
+    if (line.product.status !== "active") {
+      throw new Error(`"${line.product.title}" is currently inactive and unavailable for purchase.`);
+    }
     if (line.product.stock <= 0) {
       throw new Error(`"${line.product.title}" is out of stock.`);
     }

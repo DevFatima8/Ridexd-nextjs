@@ -360,16 +360,21 @@ export function ProductForm({
           <div className="mt-3 flex gap-2">
             {["active", "inactive"].map((option) => (
               <button
-                key={option}
+                key={opt.key}
                 type="button"
-                onClick={() => update("status", option)}
-                className={`flex-1 rounded border px-2 py-2 text-[12px] capitalize ${
-                  form.status === option
-                    ? "border-[#303335] bg-[#303335] text-white"
-                    : "border-[#c9cccf] hover:bg-[#f4f5f7]"
+                onClick={() => update("status", opt.key)}
+                className={`flex flex-col items-center justify-center rounded border p-2.5 transition ${
+                  form.status === opt.key
+                    ? opt.key === "active"
+                      ? "border-[#137333] bg-[#e6f4ea] text-[#137333] font-semibold"
+                      : "border-[#5f6368] bg-[#303335] text-white font-semibold"
+                    : "border-[#c9cccf] bg-white hover:bg-[#f4f5f7] text-[#303335]"
                 }`}
               >
-                {option}
+                <span className="text-[13px]">{opt.label}</span>
+                <span className={`text-[10px] ${form.status === opt.key && opt.key !== "active" ? "text-gray-300" : "text-gray-500"}`}>
+                  {opt.sub}
+                </span>
               </button>
             ))}
           </div>

@@ -86,8 +86,8 @@ const TRUST_ITEMS = [
 
 export default async function HomePage() {
   const [featured, arrivals, slider, counts, overview] = await Promise.all([
-    listProducts({ featured: true, pageSize: 8, sort: "newest" }),
-    listProducts({ pageSize: 8, sort: "newest" }),
+    listProducts({ featured: true, pageSize: 8, sort: "newest", status: "active" }),
+    listProducts({ pageSize: 8, sort: "newest", status: "active" }),
     listProducts({ pageSize: 12, sort: "newest", status: "active" }),
     getGroupCounts(),
     getCategoryOverview(),

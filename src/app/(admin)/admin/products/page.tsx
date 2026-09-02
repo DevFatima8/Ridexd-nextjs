@@ -90,7 +90,7 @@ export default async function AdminProductsPage({ searchParams }: { searchParams
               </option>
             ))}
           </select>
-          {categoryOptions.length > 0 ? (
+          {categoryOptions.length > 0 && (
             <select
               name="category"
               defaultValue={activeCategory}
