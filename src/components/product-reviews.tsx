@@ -152,7 +152,7 @@ export function ProductReviews({ productId, productTitle }: ProductReviewsProps)
 
   async function handleDeleteReview() {
     if (!userReview || !customer) return;
-    if (!confirm("Are you sure you want to delete your review?")) return;
+    if (!confirm("Are you sure you want to delete your review?.")) return;
 
     setDeleting(true);
     setFeedback(null);
@@ -214,11 +214,10 @@ export function ProductReviews({ productId, productTitle }: ProductReviewsProps)
 
       {feedback && (
         <div
-          className={`mt-6 rounded-xl p-4 text-xs ${
-            feedback.type === "success"
+          className={`mt-6 rounded-xl p-4 text-xs ${feedback.type === "success"
               ? "bg-emerald-50 border border-emerald-200 text-emerald-800"
               : "bg-red-50 border border-red-200 text-red-800"
-          }`}
+            }`}
         >
           {feedback.message}
         </div>
