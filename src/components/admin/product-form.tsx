@@ -55,22 +55,48 @@ export function ProductForm({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [dragOver, setDragOver] = useState(false);
 
-  function handleFiles(files: File[]) {
+  async function compressImageFile(file: File, maxWidth = 1000, maxHeight = 1333, quality = 0.82): Promise<string> {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const src = e.target?.result as string;
+        if (!src) return resolve("");
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement("canvas");
+          let { width, height } = img;
+          if (width > maxWidth || height > maxHeight) {
+            const ratio = Math.min(maxWidth / width, maxHeight / height);
+            width = Math.round(width * ratio);
+            height = Math.round(height * ratio);
+          }
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext("2d");
+          if (!ctx) return resolve(src);
+          ctx.drawImage(img, 0, 0, width, height);
+          resolve(canvas.toDataURL("image/jpeg", quality));
+        };
+        img.onerror = () => resolve(src);
+        img.src = src;
+      };
+      reader.onerror = () => resolve("");
+      reader.readAsDataURL(file);
+    });
+  }
+
+  async function handleFiles(files: File[]) {
     const remaining = MAX_PRODUCT_IMAGES - images.length;
     if (remaining <= 0) return;
     const selected = files.slice(0, remaining);
 
-    selected.forEach((file) => {
-      if (!file.type.startsWith("image/")) return;
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const result = e.target?.result;
-        if (typeof result === "string") {
-          setImages((prev) => (prev.length < MAX_PRODUCT_IMAGES ? [...prev, result] : prev));
-        }
-      };
-      reader.readAsDataURL(file);
-    });
+    for (const file of selected) {
+      if (!file.type.startsWith("image/")) continue;
+      const compressedDataUrl = await compressImageFile(file);
+      if (compressedDataUrl) {
+        setImages((prev) => (prev.length < MAX_PRODUCT_IMAGES ? [...prev, compressedDataUrl] : prev));
+      }
+    }
   }
 
   function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
