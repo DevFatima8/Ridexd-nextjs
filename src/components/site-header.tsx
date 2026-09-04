@@ -106,78 +106,98 @@ export function SiteHeader({ categories = [] }: { categories?: CategoryWithCount
           {/* Desktop Navigation Menu */}
           <nav className="hidden items-center gap-7 text-[12px] lg:text-[13px] font-semibold tracking-[0.14em] uppercase lg:flex">
             <Link href="/" className="link-underline py-2">Home</Link>
-            {GROUPS.map((group) => (
-              <div
-                key={group.slug}
-                className="relative"
-                onMouseEnter={() => setOpenMenu(group.slug)}
-                onMouseLeave={() => setOpenMenu(null)}
-              >
-                <Link href={`/collections/${group.slug}`} className="link-underline inline-block py-2">
-                  {group.name}
-                </Link>
-                {openMenu === group.slug && (
-                  <div className="absolute left-1/2 top-full z-50 w-[680px] -translate-x-1/2 rounded-xl border border-sand bg-white p-6 shadow-[0_20px_60px_rgba(16,19,25,0.14)] animate-fade-in">
-                    <p className="mb-4 text-[10px] tracking-[0.28em] text-gold uppercase font-semibold">{group.tagline}</p>
-                    {catsFor(group.slug).some((c) => c.parentSlug) ? (
-                      <div className="grid grid-cols-3 gap-6 text-left">
-                        {catsFor(group.slug)
-                          .filter((c) => !c.parentSlug)
-                          .map((parent) => {
-                            const subItems = catsFor(group.slug).filter(
-                              (c) => c.parentSlug === parent.categorySlug,
-                            );
-                            return (
-                              <div key={parent.id} className="space-y-1.5">
-                                <Link
-                                  href={`/shop?group=${group.slug}&category=${parent.categorySlug}`}
-                                  className="block text-[13px] font-bold text-ink hover:text-gold"
-                                >
-                                  {parent.name}
-                                </Link>
-                                {subItems.length > 0 && (
-                                  <div className="space-y-1 border-l border-sand/60 pl-2">
-                                    {subItems.map((sub) => (
-                                      <Link
-                                        key={sub.id}
-                                        href={`/shop?group=${group.slug}&category=${parent.categorySlug}&subcategory=${sub.categorySlug}`}
-                                        className="block text-[12px] text-ink-soft/80 transition hover:text-ink"
-                                      >
-                                        {sub.name}
-                                      </Link>
-                                    ))}
+            {GROUPS.map((group, index) => {
+              const hasSubcategories = catsFor(group.slug).some((c) => c.parentSlug);
+              const alignClass =
+                group.slug === "women" || index === 0
+                  ? "left-0"
+                  : group.slug === "men" || index === 1
+                  ? "left-0 -translate-x-3"
+                  : group.slug === "accessories" || index === GROUPS.length - 1
+                  ? "right-0"
+                  : group.slug === "bath" || index === GROUPS.length - 2
+                  ? "right-0"
+                  : "left-1/2 -translate-x-1/2";
+
+              const widthClass = hasSubcategories
+                ? "w-[660px] max-w-[calc(100vw-32px)]"
+                : "w-[460px] max-w-[calc(100vw-32px)]";
+
+              return (
+                <div
+                  key={group.slug}
+                  className="relative"
+                  onMouseEnter={() => setOpenMenu(group.slug)}
+                  onMouseLeave={() => setOpenMenu(null)}
+                >
+                  <Link href={`/collections/${group.slug}`} className="link-underline inline-block py-2">
+                    {group.name}
+                  </Link>
+                  {openMenu === group.slug && (
+                    <div className={`absolute top-full z-50 pt-2 ${alignClass}`}>
+                      <div className={`${widthClass} rounded-xl border border-sand bg-white p-6 shadow-[0_20px_60px_rgba(16,19,25,0.14)] animate-fade-in`}>
+                        <p className="mb-4 text-[10px] tracking-[0.28em] text-gold uppercase font-semibold">{group.tagline}</p>
+                        {hasSubcategories ? (
+                          <div className="grid grid-cols-3 gap-6 text-left">
+                            {catsFor(group.slug)
+                              .filter((c) => !c.parentSlug)
+                              .map((parent) => {
+                                const subItems = catsFor(group.slug).filter(
+                                  (c) => c.parentSlug === parent.categorySlug,
+                                );
+                                return (
+                                  <div key={parent.id} className="space-y-1.5">
+                                    <Link
+                                      href={`/shop?group=${group.slug}&category=${parent.categorySlug}`}
+                                      className="block text-[13px] font-bold text-ink hover:text-gold"
+                                    >
+                                      {parent.name}
+                                    </Link>
+                                    {subItems.length > 0 && (
+                                      <div className="space-y-1 border-l border-sand/60 pl-2">
+                                        {subItems.map((sub) => (
+                                          <Link
+                                            key={sub.id}
+                                            href={`/shop?group=${group.slug}&category=${parent.categorySlug}&subcategory=${sub.categorySlug}`}
+                                            className="block text-[12px] text-ink-soft/80 transition hover:text-ink"
+                                          >
+                                            {sub.name}
+                                          </Link>
+                                        ))}
+                                      </div>
+                                    )}
                                   </div>
-                                )}
-                              </div>
-                            );
-                          })}
+                                );
+                              })}
+                          </div>
+                        ) : (
+                          <div className="grid grid-cols-2 gap-3">
+                            {catsFor(group.slug).map((cat) => (
+                              <Link
+                                key={cat.id}
+                                href={`/shop?group=${group.slug}&category=${cat.categorySlug}`}
+                                className="group rounded-lg border border-transparent px-3 py-2 transition hover:border-sand hover:bg-cream"
+                              >
+                                <span className="block text-[13px] font-semibold text-ink">{cat.name}</span>
+                                <span className="block text-[11px] text-ink-soft/70">
+                                  {cat.tagline} · {cat.productCount} items
+                                </span>
+                              </Link>
+                            ))}
+                          </div>
+                        )}
+                        <Link
+                          href={`/collections/${group.slug}`}
+                          className="mt-5 inline-block text-[11px] font-semibold tracking-[0.2em] text-gold uppercase hover:underline"
+                        >
+                          Shop all {group.name} →
+                        </Link>
                       </div>
-                    ) : (
-                      <div className="grid grid-cols-2 gap-3">
-                        {catsFor(group.slug).map((cat) => (
-                          <Link
-                            key={cat.id}
-                            href={`/shop?group=${group.slug}&category=${cat.categorySlug}`}
-                            className="group rounded-lg border border-transparent px-3 py-2 transition hover:border-sand hover:bg-cream"
-                          >
-                            <span className="block text-[13px] font-semibold text-ink">{cat.name}</span>
-                            <span className="block text-[11px] text-ink-soft/70">
-                              {cat.tagline} · {cat.productCount} items
-                            </span>
-                          </Link>
-                        ))}
-                      </div>
-                    )}
-                    <Link
-                      href={`/collections/${group.slug}`}
-                      className="mt-5 inline-block text-[11px] font-semibold tracking-[0.2em] text-gold uppercase hover:underline"
-                    >
-                      Shop all {group.name} →
-                    </Link>
-                  </div>
-                )}
-              </div>
-            ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
             <Link href="/shop" className="link-underline py-2">Shop</Link>
             <Link href="/about" className="link-underline py-2">About</Link>
             <Link href="/contact" className="link-underline py-2">Contact</Link>

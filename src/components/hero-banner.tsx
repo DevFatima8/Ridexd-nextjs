@@ -86,6 +86,8 @@ export function HeroBanner({ slides }: { slides: HeroSlide[] }) {
             <img
               src={slide.image}
               alt={slide.label}
+              loading={index === 0 ? "eager" : "lazy"}
+              fetchPriority={index === 0 ? "high" : "low"}
               className={`h-full w-full object-cover object-center transition-transform duration-[7000ms] ease-out ${
                 index === active ? "scale-105" : "scale-100"
               }`}
