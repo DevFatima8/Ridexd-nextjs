@@ -146,8 +146,11 @@ function getFallbackGroupCounts(status = "active"): Record<string, number> {
   return out;
 }
 
-let seedPromise: Promise<void> | null = null;
-let isSeeded = false;
+const globalForQueries = globalThis as typeof globalThis & {
+  __ridexdIsSeeded?: boolean;
+  __ridexdSeedPromise?: Promise<void> | null;
+  __ridexdCache?: Map<string, CacheEntry<any>>;
+};
 
 async function ensureSchemaColumns(): Promise<void> {
   try {
@@ -176,64 +179,84 @@ async function ensureSchemaColumns(): Promise<void> {
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
     `);
   } catch {
-    try {
-      await db.execute(sql`
-        CREATE TABLE IF NOT EXISTS product_reviews (
-          id SERIAL PRIMARY KEY,
-          product_id INT NOT NULL,
-          customer_name VARCHAR(140) NOT NULL,
-          customer_email VARCHAR(160) NOT NULL,
-          rating INT NOT NULL,
-          comment TEXT NOT NULL,
-          status VARCHAR(20) NOT NULL DEFAULT 'approved',
-          created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-          updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-          CONSTRAINT uniq_product_reviews_product_customer UNIQUE (product_id, customer_email)
-        );
-      `);
-    } catch {
-      // Ignored if table exists
-    }
+    // Ignored if table exists
   }
 }
 
 async function seedOnce(): Promise<void> {
-  await ensureSchemaColumns();
-  const [{ value: categoryCount }] = await db.select({ value: count() }).from(categories);
-  if (Number(categoryCount) < CATEGORIES.length) {
-    for (const [i, c] of CATEGORIES.entries()) {
+  try {
+    const [{ value: categoryCount }] = await db.select({ value: count() }).from(categories);
+    if (Number(categoryCount) < CATEGORIES.length) {
+      await ensureSchemaColumns();
+      const insertValues = CATEGORIES.map((c, i) => ({
+        groupSlug: c.group,
+        parentSlug: c.parentSlug ?? "",
+        slug: c.slug,
+        name: c.name,
+        tagline: c.tagline,
+        description: `${c.name} — ${c.tagline}. Explore the full Ridexd ${c.group} edit.`,
+        imageUrl: c.image,
+        sortOrder: i,
+      }));
       try {
-        await db.insert(categories).values({
-          groupSlug: c.group,
-          parentSlug: c.parentSlug ?? "",
-          slug: c.slug,
-          name: c.name,
-          tagline: c.tagline,
-          description: `${c.name} — ${c.tagline}. Explore the full Ridexd ${c.group} edit.`,
-          imageUrl: c.image,
-          sortOrder: i,
-        });
+        await db.insert(categories).values(insertValues);
       } catch {
         // Ignored if unique constraint hit
       }
     }
+  } catch (err) {
+    console.warn("[ridexd] seeding check error:", err);
   }
 
-  isSeeded = true;
+  globalForQueries.__ridexdIsSeeded = true;
 }
 
 export async function ensureSeeded(): Promise<void> {
-  if (isSeeded) return;
-  if (!seedPromise) {
-    seedPromise = seedOnce().catch((error) => {
-      seedPromise = null;
-      console.warn("[ridexd] DB seeding check failed:", error?.message || error);
-      throw error;
-    });
+  if (globalForQueries.__ridexdIsSeeded) return;
+  if (!globalForQueries.__ridexdSeedPromise) {
+    globalForQueries.__ridexdSeedPromise = seedOnce()
+      .catch((error) => {
+        globalForQueries.__ridexdSeedPromise = null;
+        console.warn("[ridexd] DB seeding check failed:", error?.message || error);
+      })
+      .finally(() => {
+        globalForQueries.__ridexdIsSeeded = true;
+      });
   }
-  await seedPromise;
+  await globalForQueries.__ridexdSeedPromise;
 }
 
+/* ----------------------------- in-memory cache ---------------------------- */
+
+type CacheEntry<T> = {
+  data: T;
+  timestamp: number;
+};
+
+const CACHE_TTL_MS = 60 * 1000; // 60 seconds TTL
+
+const memoryCache = globalForQueries.__ridexdCache ?? new Map<string, CacheEntry<any>>();
+if (!globalForQueries.__ridexdCache) {
+  globalForQueries.__ridexdCache = memoryCache;
+}
+
+export function getCached<T>(key: string): T | null {
+  const entry = memoryCache.get(key);
+  if (!entry) return null;
+  if (Date.now() - entry.timestamp > CACHE_TTL_MS) {
+    memoryCache.delete(key);
+    return null;
+  }
+  return entry.data as T;
+}
+
+export function setCached<T>(key: string, data: T): void {
+  memoryCache.set(key, { data, timestamp: Date.now() });
+}
+
+export function clearCatalogCache(): void {
+  memoryCache.clear();
+}
 
 /* ------------------------------- products -------------------------------- */
 
@@ -241,11 +264,9 @@ export type ProductRowWithSales = ProductRow & { totalSold: number };
 
 export async function getProductsTotalSoldMap(productIds?: number[]): Promise<Map<number, number>> {
   const map = new Map<number, number>();
+  if (!productIds || productIds.length === 0) return map;
   try {
-    const conditions = [sql`${orders.status} <> 'cancelled'`];
-    if (productIds && productIds.length > 0) {
-      conditions.push(inArray(orderItems.productId, productIds));
-    }
+    const conditions = [sql`${orders.status} <> 'cancelled'`, inArray(orderItems.productId, productIds)];
     const rows = await db
       .select({
         productId: orderItems.productId,
@@ -309,6 +330,24 @@ export async function listProducts(filters: ProductFilters = {}): Promise<{
   pageSize: number;
   pageCount: number;
 }> {
+  // Check memory cache for common non-search storefront queries
+  const isCacheable =
+    !filters.q &&
+    !filters.minPrice &&
+    !filters.maxPrice &&
+    (!filters.page || filters.page === 1);
+  const cacheKey = isCacheable ? `list_products_${JSON.stringify(filters)}` : null;
+  if (cacheKey) {
+    const cached = getCached<{
+      items: ProductRowWithSales[];
+      total: number;
+      page: number;
+      pageSize: number;
+      pageCount: number;
+    }>(cacheKey);
+    if (cached) return cached;
+  }
+
   try {
     await ensureSeeded();
     const page = Math.max(1, filters.page ?? 1);
@@ -358,30 +397,40 @@ export async function listProducts(filters: ProductFilters = {}): Promise<{
     }
     const where = conditions.length ? and(...conditions) : undefined;
 
-    const rows = await db
-      .select()
-      .from(products)
-      .where(where)
-      .orderBy(orderClause(filters.sort))
-      .limit(pageSize)
-      .offset((page - 1) * pageSize);
+    // Run rows select and total count in parallel
+    const [rows, countRows] = await Promise.all([
+      db
+        .select()
+        .from(products)
+        .where(where)
+        .orderBy(orderClause(filters.sort))
+        .limit(pageSize)
+        .offset((page - 1) * pageSize),
+      db.select({ value: count() }).from(products).where(where),
+    ]);
 
-    const [{ value }] = await db.select({ value: count() }).from(products).where(where);
-
+    const value = countRows[0]?.value ?? 0;
     const productIds = rows.map((p: ProductRow) => p.id);
-    const salesMap = await getProductsTotalSoldMap(productIds);
+    const salesMap = productIds.length > 0 ? await getProductsTotalSoldMap(productIds) : new Map<number, number>();
     const itemsWithSales: ProductRowWithSales[] = rows.map((p: ProductRow) => ({
       ...p,
+      images: Array.isArray(p.images) ? p.images.slice(0, 2) : p.images,
       totalSold: salesMap.get(p.id) ?? 0,
     }));
 
-    return {
+    const result = {
       items: itemsWithSales,
       total: Number(value),
       page,
       pageSize,
       pageCount: Math.max(1, Math.ceil(Number(value) / pageSize)),
     };
+
+    if (cacheKey) {
+      setCached(cacheKey, result);
+    }
+
+    return result;
   } catch (error) {
     console.warn("[ridexd] listProducts database query failed, using in-memory catalog fallback");
     const fallbackRes = getFallbackProducts(filters);
@@ -451,6 +500,7 @@ export async function getRelatedProducts(product: ProductRow, limit = 4): Promis
 export async function createProduct(values: NewProductRow) {
   const stockVal = Math.max(0, Math.floor(Number(values.stock) || 0));
   await db.insert(products).values({ ...values, stock: stockVal });
+  clearCatalogCache();
   return getProductBySlug(values.slug);
 }
 
@@ -463,14 +513,20 @@ export async function updateProduct(id: number, values: Partial<NewProductRow>) 
     .update(products)
     .set(patch)
     .where(eq(products.id, id));
+  clearCatalogCache();
   return getProductById(id);
 }
 
 export async function deleteProduct(id: number) {
   await db.delete(products).where(eq(products.id, id));
+  clearCatalogCache();
 }
 
 export async function getGroupCounts(status = "active"): Promise<Record<string, number>> {
+  const cacheKey = `group_counts_${status}`;
+  const cached = getCached<Record<string, number>>(cacheKey);
+  if (cached) return cached;
+
   try {
     await ensureSeeded();
     const whereClause = status && status !== "all" ? eq(products.status, status) : undefined;
@@ -481,6 +537,7 @@ export async function getGroupCounts(status = "active"): Promise<Record<string, 
       .groupBy(products.groupSlug);
     const out: Record<string, number> = {};
     rows.forEach((r: { groupSlug: string; value: number | string }) => (out[r.groupSlug] = Number(r.value)));
+    setCached(cacheKey, out);
     return out;
   } catch (error) {
     console.warn("[ridexd] getGroupCounts DB error, using fallback");
@@ -507,35 +564,41 @@ export type CategoryWithCount = {
  * and the product form.
  */
 export async function getCategoryOverview(group?: string, status = "active"): Promise<CategoryWithCount[]> {
+  const cacheKey = `category_overview_${group || "all"}_${status}`;
+  const cached = getCached<CategoryWithCount[]>(cacheKey);
+  if (cached) return cached;
+
   try {
     await ensureSeeded();
-    const catRows = await db
-      .select({
-        id: categories.id,
-        groupSlug: categories.groupSlug,
-        parentSlug: categories.parentSlug,
-        categorySlug: categories.slug,
-        name: categories.name,
-        tagline: categories.tagline,
-        image: categories.imageUrl,
-      })
-      .from(categories)
-      .orderBy(asc(categories.sortOrder), asc(categories.id));
-
     const prodConditions = [];
     if (status && status !== "all") {
       prodConditions.push(eq(products.status, status));
     }
-    const prodRows = await db
-      .select({
-        groupSlug: products.groupSlug,
-        categorySlug: products.categorySlug,
-        subcategorySlug: products.subcategorySlug,
-      })
-      .from(products)
-      .where(prodConditions.length ? and(...prodConditions) : undefined);
 
-    return catRows
+    const [catRows, prodRows] = await Promise.all([
+      db
+        .select({
+          id: categories.id,
+          groupSlug: categories.groupSlug,
+          parentSlug: categories.parentSlug,
+          categorySlug: categories.slug,
+          name: categories.name,
+          tagline: categories.tagline,
+          image: categories.imageUrl,
+        })
+        .from(categories)
+        .orderBy(asc(categories.sortOrder), asc(categories.id)),
+      db
+        .select({
+          groupSlug: products.groupSlug,
+          categorySlug: products.categorySlug,
+          subcategorySlug: products.subcategorySlug,
+        })
+        .from(products)
+        .where(prodConditions.length ? and(...prodConditions) : undefined),
+    ]);
+
+    const result = catRows
       .filter((cat: { groupSlug: string }) => !group || cat.groupSlug === group)
       .map(
         (cat: {
@@ -573,6 +636,9 @@ export async function getCategoryOverview(group?: string, status = "active"): Pr
           };
         },
       );
+
+    setCached(cacheKey, result);
+    return result;
   } catch (error) {
     console.warn("[ridexd] getCategoryOverview database query failed, using fallback", error);
     return getFallbackCategories(group);
@@ -623,6 +689,8 @@ export async function createCategory(input: CategoryInput) {
     sortOrder: Number(value ?? 0),
   });
 
+  clearCatalogCache();
+
   const created = await db
     .select()
     .from(categories)
@@ -641,12 +709,14 @@ export async function updateCategory(id: number, input: Partial<CategoryInput>) 
   if (input.parentSlug !== undefined) patch.parentSlug = String(input.parentSlug).trim();
 
   await db.update(categories).set(patch).where(eq(categories.id, id));
+  clearCatalogCache();
   const rows = await db.select().from(categories).where(eq(categories.id, id)).limit(1);
   return rows[0] ?? null;
 }
 
 export async function deleteCategory(id: number) {
   await db.delete(categories).where(eq(categories.id, id));
+  clearCatalogCache();
 }
 
 /* -------------------------------- orders --------------------------------- */
