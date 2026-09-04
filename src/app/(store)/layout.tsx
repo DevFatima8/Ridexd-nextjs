@@ -12,12 +12,12 @@ export default async function StoreLayout({ children }: { children: ReactNode })
   const categories = await getCategoryOverview();
 
   return (
-    <CartProvider>
+    <>
       <SiteHeader categories={categories} />
       <CartDrawer />
       <main className="min-h-[60vh]">{children}</main>
       <SiteFooter categories={categories} />
       <WhatsAppButton />
-    </CartProvider>
+    </>
   );
 }

@@ -85,13 +85,13 @@ const TRUST_ITEMS = [
 ];
 
 export default async function HomePage() {
-  const [featured, arrivals, slider, counts, overview] = await Promise.all([
+  const [featured, slider, counts, overview] = await Promise.all([
     listProducts({ featured: true, pageSize: 8, sort: "newest" }),
-    listProducts({ pageSize: 8, sort: "newest" }),
     listProducts({ pageSize: 12, sort: "newest", status: "active" }),
     getGroupCounts(),
     getCategoryOverview(),
   ]);
+  const arrivals = { items: slider.items.slice(0, 8) };
 
   return (
     <div className="w-full overflow-hidden bg-white text-ink">
