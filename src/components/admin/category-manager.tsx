@@ -17,17 +17,43 @@ export function CategoryManager({ categories }: { categories: CategoryWithCount[
   const [draft, setDraft] = useState({ name: "", tagline: "", imageUrl: "", groupSlug: "women", parentSlug: "" });
   const catFileInputRef = useRef<HTMLInputElement>(null);
 
-  function handleCatFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
+  async function compressCategoryFile(file: File, maxWidth = 800, maxHeight = 800, quality = 0.82): Promise<string> {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const src = e.target?.result as string;
+        if (!src) return resolve("");
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement("canvas");
+          let { width, height } = img;
+          if (width > maxWidth || height > maxHeight) {
+            const ratio = Math.min(maxWidth / width, maxHeight / height);
+            width = Math.round(width * ratio);
+            height = Math.round(height * ratio);
+          }
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext("2d");
+          if (!ctx) return resolve(src);
+          ctx.drawImage(img, 0, 0, width, height);
+          resolve(canvas.toDataURL("image/jpeg", quality));
+        };
+        img.onerror = () => resolve(src);
+        img.src = src;
+      };
+      reader.onerror = () => resolve("");
+      reader.readAsDataURL(file);
+    });
+  }
+
+  async function handleCatFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file || !file.type.startsWith("image/")) return;
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const result = event.target?.result;
-      if (typeof result === "string") {
-        setDraft((d) => ({ ...d, imageUrl: result }));
-      }
-    };
-    reader.readAsDataURL(file);
+    const compressed = await compressCategoryFile(file);
+    if (compressed) {
+      setDraft((d) => ({ ...d, imageUrl: compressed }));
+    }
   }
 
   function reset() {
